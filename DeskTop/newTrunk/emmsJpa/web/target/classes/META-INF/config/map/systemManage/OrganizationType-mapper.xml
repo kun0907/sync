@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+	<mapper namespace="OrganizationType" >
+		<resultMap type="OrganizationType" id="organizationTypeMap">
+			<id column="org_type_id" property="orgTypeId"/>
+			<result column="org_id" property="orgId"/>
+			<result column="root_project_id" property="rootProjectId"/>
+			<result column="org_type" property="orgType"/>
+			<result column="is_allwbs" property="isAllwbs"/>
+		</resultMap>
+		
+		<!-- 批量插入组织机构类型表 -->
+		<insert id="insertList" parameterType="java.util.List" useGeneratedKeys="false">
+			insert into sys_org_type
+			(org_type_id,org_id,root_project_id,org_type,is_allwbs)
+			SELECT A.*
+			FROM(
+			<foreach collection="list" item="item" index="index" separator="UNION ALL">
+				(SELECT 
+				#{item.orgTypeId,jdbcType=VARCHAR} org_type_id,
+				#{item.orgId,jdbcType=VARCHAR} org_id,
+				#{item.rootProjectId,jdbcType=VARCHAR} root_project_id,
+				#{item.orgType,jdbcType=VARCHAR} org_type,
+				#{item.isAllwbs,jdbcType=CHAR} is_allwbs
+				FROM dual)
+			</foreach>
+			)A 
+		</insert>
+  		<!-- 根据组织机构id删除组织机构类型表 -->
+  		<delete id="deleteOrgTypeByOrgId" parameterType="string">
+  			delete from sys_org_type sot
+  			<where>
+  				sot.org_id = #{orgId}
+  			</where>
+  		</delete>
+  		<!-- 根据组织机构id查询组织机构类型 -->
+  		<select id="selectOrgType" parameterType="string" resultMap="organizationTypeMap">
+  			select sot.org_type,sot.org_type_id,sot.org_id from sys_org_type sot
+  			<where>
+  				sot.org_id = #{orgId}
+  			</where>
+  		</select>
+	</mapper>

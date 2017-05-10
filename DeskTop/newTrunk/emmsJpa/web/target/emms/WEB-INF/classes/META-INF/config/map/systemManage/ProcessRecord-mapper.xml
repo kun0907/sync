@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ProcessRecord">
+    <resultMap type="ProcessRecord" id="processRecordMap">
+        <id column="process_record_id" property="precessRecordId"/>
+        <result column="process_record_entity" property="processRecordEntity"/>
+        <result column="process_record_entity_id" property="processRecordEntityId"/>
+        <result column="is_finish" property="isFinish"/>
+        <result column="sequence" property="sequence"/>
+        <result column="summit_time" property="summitTime"/>
+    </resultMap>
+    <insert id="insert" parameterType="ProcessRecord" useGeneratedKeys="false">
+        insert into sys_process_record (
+        process_record_id,process_record_entity,
+        process_record_entity_id,is_finish,
+        sequence,summit_time
+        ) values (
+        #{precessRecordId},#{processRecordEntity},
+        #{processRecordEntityId},#{isFinish},
+        #{sequence},#{summitTime}
+        )
+    </insert>
+    <select id="selectByEntityId" resultMap="processRecordMap" parameterType="string">
+        select * from sys_process_record where process_record_entity_id = #{id} and is_finish ='0'
+    </select>
+    <update id="update">
+        update sys_process_record
+        <set>
+            is_finish = #{isFinish},sequence = #{sequence}
+        </set>
+        where process_record_id = #{precessRecordId}
+    </update>
+</mapper>

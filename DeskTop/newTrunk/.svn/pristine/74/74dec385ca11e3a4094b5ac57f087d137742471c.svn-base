@@ -1,0 +1,156 @@
+package com.dkd.emms.systemManage.bo;
+
+import com.dkd.emms.core.entity.BaseEntity;
+
+import java.math.BigDecimal;
+
+public class Design extends BaseEntity {
+
+	private String designId;//设计院编码id
+	private String systemcodeId;//系统编码ID
+	private String designOrgId;//设计院机构ID
+	private String designCode;//设计院编码
+	private String designName;//设计院物资名称
+	private String designDescribe;//设计院物资描述
+	private String designUnitMain;//设计院物资主计量单位
+	private String designUnitSecondary;//设计院物资辅助计量单位
+	private String designType;//设计院物资类型
+	private String isMatching;//匹配状态（0未匹配、1已匹配）
+	private String designState;//设计院编码状态（未知
+	private String additional1;//附加1
+	private String additional2;//附加2
+	private String additional3;//附加3
+	private String additional4;//附加4
+	private String designConversion;//主副计量单位换算率
+	private String isdel;//是否有效  (1有效)
+	private String wbsCode;//wbs编码
+	private BigDecimal designCount;//部件数量
+	private String deviceNo;//位号
+
+	public BigDecimal getDesignCount() {
+		return designCount;
+	}
+
+	public void setDesignCount(BigDecimal designCount) {
+		this.designCount = designCount;
+	}
+
+	public String getWbsCode() {
+		return wbsCode;
+	}
+
+	public void setWbsCode(String wbsCode) {
+		this.wbsCode = wbsCode;
+	}
+
+	public String getDesignId() {
+		return designId;
+	}
+	public void setDesignId(String designId) {
+		this.designId = designId;
+	}
+	public String getSystemcodeId() {
+		return systemcodeId;
+	}
+	public void setSystemcodeId(String systemcodeId) {
+		this.systemcodeId = systemcodeId;
+	}
+	public String getDesignOrgId() {
+		return designOrgId;
+	}
+	public void setDesignOrgId(String designOrgId) {
+		this.designOrgId = designOrgId;
+	}
+	public String getDesignCode() {
+		return designCode;
+	}
+	public void setDesignCode(String designCode) {
+		this.designCode = designCode;
+	}
+	public String getDesignName() {
+		return designName;
+	}
+	public void setDesignName(String designName) {
+		this.designName = designName;
+	}
+	public String getDesignDescribe() {
+		return designDescribe;
+	}
+	public void setDesignDescribe(String designDescribe) {
+		this.designDescribe = designDescribe;
+	}
+	public String getDesignUnitMain() {
+		return designUnitMain;
+	}
+	public void setDesignUnitMain(String designUnitMain) {
+		this.designUnitMain = designUnitMain;
+	}
+	public String getDesignUnitSecondary() {
+		return designUnitSecondary;
+	}
+	public void setDesignUnitSecondary(String designUnitSecondary) {
+		this.designUnitSecondary = designUnitSecondary;
+	}
+	public String getDesignType() {
+		return designType;
+	}
+	public void setDesignType(String designType) {
+		this.designType = designType;
+	}
+	public String getIsMatching() {
+		return isMatching;
+	}
+	public void setIsMatching(String isMatching) {
+		this.isMatching = isMatching;
+	}
+	public String getDesignState() {
+		return designState;
+	}
+	public void setDesignState(String designState) {
+		this.designState = designState;
+	}
+	public String getAdditional1() {
+		return additional1;
+	}
+	public void setAdditional1(String additional1) {
+		this.additional1 = additional1;
+	}
+	public String getAdditional2() {
+		return additional2;
+	}
+	public void setAdditional2(String additional2) {
+		this.additional2 = additional2;
+	}
+	public String getAdditional3() {
+		return additional3;
+	}
+	public void setAdditional3(String additional3) {
+		this.additional3 = additional3;
+	}
+	public String getAdditional4() {
+		return additional4;
+	}
+	public void setAdditional4(String additional4) {
+		this.additional4 = additional4;
+	}
+	public String getDesignConversion() {
+		return designConversion;
+	}
+	public void setDesignConversion(String designConversion) {
+		this.designConversion = designConversion;
+	}
+	public String getIsdel() {
+		return isdel;
+	}
+	public void setIsdel(String isdel) {
+		this.isdel = isdel;
+	}
+
+	public String getDeviceNo() {
+		return deviceNo;
+	}
+
+	public void setDeviceNo(String deviceNo) {
+		this.deviceNo = deviceNo;
+	}
+}

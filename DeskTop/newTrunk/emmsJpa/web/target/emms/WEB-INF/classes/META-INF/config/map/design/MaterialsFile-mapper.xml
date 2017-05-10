@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MaterialsFile">
+
+    <resultMap type="MaterialsFile" id="MaterialsFileMap">
+		<result column="materials_table_id" property="materialsTableId"/>
+		<result column="real_file_name" property="realFileName"/>
+		<result column="contents" property="contents"/>
+	</resultMap>
+
+	<!-- 插入一个实体 -->
+	<insert id="insert" parameterType="MaterialsFile" useGeneratedKeys="false">
+		insert into D_MATERIALS_FILE(
+            materials_table_id, real_file_name, contents
+		) values(
+			#{materialsTableId}, #{realFileName}, #{contents,jdbcType=BLOB}
+		)
+	</insert>
+	
+	<!-- 根据料表id查询 -->
+	<select id="selectByPk" resultMap="MaterialsFileMap" parameterType="string">
+		select * from D_MATERIALS_FILE where materials_table_id = #{materialsTableId}
+	</select>
+
+	<!-- 根据料表id删除文件 -->
+	<delete id="delete" parameterType="string">
+		delete from D_MATERIALS_FILE where materials_table_id = #{materialsTableId}
+	</delete>
+	
+</mapper>

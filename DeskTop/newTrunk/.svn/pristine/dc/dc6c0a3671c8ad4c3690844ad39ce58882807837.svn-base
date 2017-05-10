@@ -1,0 +1,12 @@
+-- Add/modify columns 
+alter table B_DESIGN_CODE add device_no NVARCHAR2(100);
+-- Add comments to the columns 
+comment on column B_DESIGN_CODE.device_no
+  is '位号';
+
+
+-- Add/modify columns 
+alter table B_DESIGN_CODE add design_count NUMBER(20,4);
+-- Add comments to the columns 
+comment on column B_DESIGN_CODE.design_count
+  is '数量';

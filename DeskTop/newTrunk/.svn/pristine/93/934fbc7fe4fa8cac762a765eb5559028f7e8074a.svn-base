@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+	<mapper namespace="Employee" >
+		<resultMap type="Employee" id="employeeMap">
+			<id column="emp_id" property="empId"/>
+			<result column="emp_no" property="empNo"/>
+			<result column="emp_name" property="empName"/>
+			<result column="sex" property="sex"/>
+			<result column="birthday" property="birthday"/>
+			<result column="emp_state" property="empState"/>
+			<result column="cell_phone" property="cellPhone"/>
+			<result column="wechat" property="wechat"/>
+			<result column="email" property="email"/>
+			<result column="org_seq" property="orgSeq"/>
+			<association property="organization" column="org_id" select="Organization.selectByPk"/>
+			<association property="rootOrganization" column="root_id" resultMap="Organization.organizationMap"></association>
+		</resultMap>
+		
+		<sql id="all">emp_id,emp_no,emp_name,sex,birthday,emp_state,cell_phone,wechat,email,so.org_id,so.root_id,se.org_seq</sql>
+		<!-- 分页组织机构数量 -->
+		<select id="countByCondition" resultType="int" parameterType="map">
+			select count(*) from sys_employee se 
+			left join sys_org so on se.org_id = so.org_id
+			left join sys_user su on se.emp_id = su.employee
+			<where>
+				su.is_sysadmin = '0' and su.is_orgadmin = '0'
+				<if test="EmployeeCondition.orgId!=null and EmployeeCondition.orgId!=''"> and se.org_seq like '%' || #{EmployeeCondition.orgId} || '%' </if>		
+				<if test="EmployeeCondition.empCode!=null and EmployeeCondition.empCode!=''"> and se.emp_no like '%' || #{EmployeeCondition.empCode} || '%'</if>		
+				<if test="EmployeeCondition.empName!=null and EmployeeCondition.empName!=''"> and se.emp_name like '%' || #{EmployeeCondition.empName} || '%'</if>		
+			</where>
+		</select>
+		
+		<!-- 分页查询组织机构信息  -->
+		<select id="selectByCondition" resultType="java.util.HashMap" parameterType="map">
+			select * from (
+				select <include refid="all"/>,so.org_name,su.user_id,ROW_NUMBER() OVER(order by se.emp_no desc) r    
+				from   sys_employee  se 
+				left join sys_org so on se.org_id = so.org_id
+				left join sys_user su on se.emp_id = su.employee
+				<where>
+					su.is_sysadmin = '0' and su.is_orgadmin = '0'
+					<if test="EmployeeCondition.orgId!=null and EmployeeCondition.orgId!=''"> and se.org_seq like '%' || #{EmployeeCondition.orgId} || '%' </if>		
+					<if test="EmployeeCondition.empCode!=null and EmployeeCondition.empCode!=''"> and se.emp_no like '%' || #{EmployeeCondition.empCode} || '%'</if>		
+					<if test="EmployeeCondition.empName!=null and EmployeeCondition.empName!=''"> and se.emp_name like '%' || #{EmployeeCondition.empName} || '%'</if>		
+				</where>
+			) s where s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1)  
+		</select>
+		<!-- 根据组织id查询人员信息 -->
+		<select id="getEmployeeByOrg" parameterType="string" resultMap="employeeMap">
+			select * from sys_employee se 
+			<where>	
+				se.org_id = #{orgId} and emp_state='working'
+			</where>
+		</select>
+		
+		<!-- 插入员工信息 -->
+		<insert id="insert" useGeneratedKeys="false">
+			insert into sys_employee (
+				emp_id,emp_no,emp_name,sex,birthday,emp_state,cell_phone,wechat,email,org_id,root_id,org_seq
+			) values (
+				#{empId},#{empNo},#{empName},#{sex},#{birthday},#{empState},#{cellPhone},#{wechat},#{email},#{organization.orgId},#{rootOrganization.orgId},#{orgSeq}
+			)
+		</insert>
+		<!-- 更新员工信息 -->
+		<update id="update">
+			update sys_employee 
+			<set>   
+				<if test="empName!= null and empName!=''">emp_name = #{empName},</if>
+				<if test="sex!= null and sex!=''">sex = #{sex},</if>
+				<if test="birthday!= null">birthday =  #{birthday},</if>
+				<if test="email!= null and email!=''">email= #{email},</if>
+				<if test="cellPhone!= null and cellPhone!=''">cell_phone= #{cellPhone},</if>
+				<if test="empState!= null and empState!=''">emp_state= #{empState},</if>
+				emp_id = #{empId}
+			</set>
+			where emp_id = #{empId}
+		</update>
+		<!-- 校验Code是否重复 -->
+		<select id="checkEmpNo" parameterType="map" resultType="int">
+			 select count(*) from sys_employee se 
+			<where>
+			    se.emp_no=#{empNo} 
+			    <if test="empId!= null and empId!=''">and se.emp_id != #{empId}</if>
+			</where>
+		</select>
+<!-- *********************************************角色使用****************************************  -->	
+		<!-- 分页组织机构数量 -->
+		<select id="countEmployeeByOrg" resultType="int" parameterType="map">
+			select count(*) from sys_employee se 
+			left join sys_org so on se.org_id = so.org_id
+			left join sys_user su on se.emp_id = su.employee
+			<where>
+				su.is_sysadmin = '0' and su.is_orgadmin = '0'
+				<if test="EmployeeCondition.orgId!=null and EmployeeCondition.orgId!=''"> and se.ROOT_ID = #{EmployeeCondition.orgId}</if>		
+				<if test="EmployeeCondition.empCode!=null and EmployeeCondition.empCode!=''"> and se.emp_no like '%' || #{EmployeeCondition.empCode} || '%'</if>		
+				<if test="EmployeeCondition.empName!=null and EmployeeCondition.empName!=''"> and se.emp_name like '%' || #{EmployeeCondition.empName} || '%'</if>		
+			</where>
+		</select>
+		
+		<!-- 分页查询组织机构信息  -->
+		<select id="getEmployeeByOrgRole" resultType="java.util.HashMap" parameterType="map">
+			select * from (
+				select se.emp_name,so.org_name,su.user_id,ROW_NUMBER() OVER(order by se.emp_no desc) r    
+				from   sys_employee  se 
+				left join sys_org so on se.org_id = so.org_id
+				left join sys_user su on se.emp_id = su.employee
+				<where>
+					su.is_sysadmin = '0' and su.is_orgadmin = '0'
+					<if test="EmployeeCondition.orgId!=null and EmployeeCondition.orgId!=''"> and se.ROOT_ID = #{EmployeeCondition.orgId}</if>	
+					<if test="EmployeeCondition.empCode!=null and EmployeeCondition.empCode!=''"> and se.emp_no like '%' || #{EmployeeCondition.empCode} || '%'</if>		
+					<if test="EmployeeCondition.empName!=null and EmployeeCondition.empName!=''"> and se.emp_name like '%' || #{EmployeeCondition.empName} || '%'</if>
+					<if test="EmployeeCondition.orgName!=null and EmployeeCondition.orgName!=''"> and so.org_name like '%' || #{EmployeeCondition.orgName} || '%'</if>
+				</where>
+				) s where s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1)  
+		</select>
+	
+		<select id="selectByPk" resultMap="employeeMap">
+			select * from sys_employee  se
+			<where>
+				se.emp_id = #{empId}
+			</where>
+		</select>
+	</mapper>

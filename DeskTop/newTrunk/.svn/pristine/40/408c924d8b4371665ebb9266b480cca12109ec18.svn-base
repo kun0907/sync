@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Reservoirarea">
+    <resultMap type="Reservoirarea" id="reservoirareaMap">
+		<id column="reservoirarea_id" property="reservoirareaId"/>
+		<result column="warehouse_id" property="warehouseId"/>
+		<result column="reservoirarea_code" property="reservoirareaCode"/>
+		<result column="reservoirarea_name" property="reservoirareaName"/>
+		<result column="reservoirarea_type" property="reservoirareaType"/>
+		<result column="reservoirarea_state" property="reservoirareaState"/>
+		<result column="acreage" property="acreage"/>
+		<result column="contacts" property="contacts"/>
+		<result column="phone" property="phone"/>
+		<result column="fax" property="fax"/>
+		<result column="remark" property="remark"/>
+		<result column="create_user_name" property="createUserName"/>
+		<result column="create_user_id" property="createUserId"/>
+		<result column="create_time" property="createTime"/>
+	</resultMap>
+	<sql id="column">reservoirarea_id,warehouse_id,reservoirarea_code,reservoirarea_name,reservoirarea_type,reservoirarea_state,acreage,contacts,phone,fax,remark,create_user_name,create_user_id,create_time</sql>   
+    <!-- 查找全部 -->
+	<select id="selectAll" resultMap="reservoirareaMap">
+		select * from b_reservoirarea
+	</select>
+	<!-- 根据条件分页查询条目 -->
+	<select id="selectByCondition" resultMap="reservoirareaMap" parameterType="map">
+		select * from(
+			select reservoirarea_id,warehouse_id,reservoirarea_code,reservoirarea_name,
+			dic.dictionary_name as reservoirarea_type,acreage,contacts,phone,fax,remark,
+			ROW_NUMBER() OVER(order by re.reservoirarea_id) r
+			from b_reservoirarea re
+			left join sys_dictionary dic
+			on dic.dictionary_code = re.reservoirarea_type
+			<where>
+				dic.is_del='1'
+				<if test="ReservoirareaCondition.warehouseId!=null and ReservoirareaCondition.warehouseId!=''">
+					and re.warehouse_id = #{ReservoirareaCondition.warehouseId}
+				</if>
+			</where>
+		) s
+		where s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1)
+	</select>
+	<!-- 根据条件查询条目数 -->
+	<select id="countByCondition" resultType="int" parameterType="map">
+		select count(*) from b_reservoirarea re
+		left join sys_dictionary dic
+		on dic.dictionary_code = re.reservoirarea_type
+		<where>
+			dic.is_del='1'
+				<if test="ReservoirareaCondition.warehouseId!=null and ReservoirareaCondition.warehouseId!=''">
+					and re.warehouse_id = #{ReservoirareaCondition.warehouseId}
+				</if>
+			</where>
+	</select>
+	<!-- 根据主键查询库区信息 -->
+	<select id="selectByPk" resultMap="reservoirareaMap" parameterType="string">
+		select <include refid="column" /> from b_reservoirarea w 
+		<where>
+			reservoirarea_id = #{reservoirareaId}
+		</where>
+	</select>
+	<delete id="delete" parameterType="string">
+		delete from b_reservoirarea where reservoirarea_id = #{reservoirareaId}
+	</delete>
+	<delete id="deleteByWareId" parameterType="string">
+		delete from b_reservoirarea where warehouse_id = #{warehouseId}
+	</delete>
+	<!-- 插入库区信息 -->
+	<insert id="insert" parameterType="Reservoirarea" useGeneratedKeys="false">
+		insert into b_reservoirarea (
+			reservoirarea_id,warehouse_id,reservoirarea_code,reservoirarea_name,
+			reservoirarea_type,reservoirarea_state,acreage,contacts,phone,fax,remark,create_user_name,create_user_id,create_time
+		) values (
+			#{reservoirareaId},#{warehouseId},#{reservoirareaCode},#{reservoirareaName},
+			#{reservoirareaType},#{reservoirareaState},#{acreage},#{contacts},#{phone},#{fax},#{remark},#{createUserName},#{createUserId},#{createTime}
+		)
+	</insert>
+	
+	<!-- 更新库区信息 -->
+	<update id="update" parameterType="Reservoirarea">
+		update b_reservoirarea 
+		<set>
+			reservoirarea_type = #{reservoirareaType},
+			acreage = #{acreage},
+			contacts = #{contacts},
+			phone = #{phone},
+			fax = #{fax},
+			remark = #{remark}
+		</set>
+		where reservoirarea_id = #{reservoirareaId}
+	</update>
+	<!-- 校验Code是否重复 -->
+	<select id="checkStoNo" parameterType="map" resultType="int">
+		 select count(*) from b_reservoirarea se 
+		<where>
+		    se.reservoirarea_code=#{stoNo} 
+		    <if test="stoId!= null and stoId!=''">and se.reservoirarea_id != #{stoId}</if>
+		</where>
+	</select>
+</mapper>

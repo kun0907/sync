@@ -1,0 +1,69 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
+<%@ include file="/WEB-INF/jsp/common/includes.jsp" %>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<title>系统导航</title>
+	<%@ include file="/WEB-INF/jsp/common/common.jsp" %>
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style type="text/css">
+        body{
+            background-image: url("${emms}/images/002.png");
+        }
+    </style>
+</head>
+    <body>
+        <div style="color: #ffffff;width: 100%">
+            <div style="width:33.3%;float:left;height:55px;">
+                <img src="${emms}/images/logo.png" alt="logo" style="margin-bottom:40px">
+                <B style="font-size: 25px;">建设工程物资管理平台</B>
+            </div>
+            <div style="width:33.3%;font-size: 15px;float: left;height:60px;text-align: center;">
+                <div style="width:100%;margin-top:28px;">
+                    <span style="margin-right: 150px">
+                        <span onclick="changePwd();"><img src="${emms}/images/5.png" alt="设置"><a href="#" style="color: #ffffff">设置</a></span>
+                    </span>
+                    <span>
+                        <span onClick="top.location.replace('${emms}/logout.do')"><img src="${emms}/images/5.png" alt="退出"><a href="#" style="color: #ffffff">退出</a></span>
+                    </span>
+                </div>
+            </div>
+            <div style="float:right;width:33.3%;font-size: 20px;height:60px;margin-top:28px;">欢迎
+                <c:if test="${empty user.employee}">
+                    ${user.userName} 登录本系统&nbsp;&nbsp;您属于系统管理员
+                </c:if>
+                <c:if test="${not empty user.employee}">
+                    ${user.employee.empName} 登录本系统&nbsp;&nbsp;您属于${user.employee.organization.orgTypeName}
+                </c:if>
+            </div>
+        </div>
+        <%--<div class="content">
+            <div class="nav">
+                <span class="amend"  onclick="changePwd();"><i class="icon_set"></i><a href="#">设置</a></span>
+                <span class="quit" onClick="top.location.replace('${emms}/logout.do')"><i class="icon_exit"></i><a href="#">退出</a></span>
+                <span class="help"><i class="icon_help"></i><a href="#">使用帮助</a></span>
+                        <span class="com">欢迎&nbsp;
+                            <c:if test="${empty user.employee}">
+                                ${user.userName}
+                            </c:if>
+                            <c:if test="${not empty user.employee}">
+                                ${user.employee.empName}
+                            </c:if>
+                             登录本系统  &nbsp; &nbsp; 您属于${user.employee.organization.orgTypeName}</span>
+            </div>
+        </div>--%>
+        <script type="text/javascript">
+            function changePwd(){
+                top.$('#dialog').dialog({
+                    title: '修改密码',
+                    width: 700,
+                    height: 300,
+                    closed: false,
+                    cache: true,
+                    href: '${emms}/system/user.do?cmd=changeUser&userId=${user.userId}'
+                });
+            }
+        </script>
+    </body>
+</html>

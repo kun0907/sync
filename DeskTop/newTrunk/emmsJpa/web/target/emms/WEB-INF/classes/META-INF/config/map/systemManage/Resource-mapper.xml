@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Resource">
+	<resultMap type="Resource" id="resourceMap">
+		<id column="resource_id" property="resourceId"/>
+		<result column="resource_code" property="resourceCode"/>
+		<result column="resource_name" property="resourceName"/>
+		<result column="resource_type" property="resourceType"/>
+		<result column="resource_url" property="url"/>
+		<result column="parent_id" property="parentId"/>
+	</resultMap>
+
+	<!-- 分页查询权限信息  -->
+	<select id="selectByCondition" resultMap="resourceMap" parameterType="map">
+		select * from (
+		select re.resource_id, re.resource_code, re.resource_name, re.resource_type, re.parent_id, resource_url, ROW_NUMBER()
+		OVER(order by re.resource_id) r from SYS_RESOURCE re
+		<where>
+			<if test="ResourceCondition.parentId!=null and ResourceCondition.parentId!=''">re.parent_id = #{ResourceCondition.parentId}</if>
+		</where>
+		) s where s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1)
+	</select>
+	<select id="countByCondition" resultType="int" parameterType="map">
+		select count(*) from SYS_RESOURCE re
+		<where>
+			<if test="ResourceCondition.parentId!=null and ResourceCondition.parentId!=''">re.parent_id = #{ResourceCondition.parentId}</if>
+		</where>
+	</select>
+
+	<!-- 根据项目Code获取个数 -->
+	<select id="countByResourceCode" resultType="int" parameterType="string" >
+		select count(*) from sys_resource se
+		<where>
+			se.resource_code = #{resourceCode}
+		</where>
+	</select>
+
+
+
+
+	<select id="selectAll" resultMap="resourceMap">
+		select * from SYS_RESOURCE 
+	</select>
+	
+	<select id="selectAllForRole" resultType="map">
+		select 
+		res.resource_id as resourceId, res.resource_code as resourceCode, 
+		res.resource_name as resourceName, res.parent_id
+		from sys_resource res
+	</select>
+	
+
+	<select id="selectByPk" resultMap="resourceMap" parameterType="string">
+		select * from SYS_RESOURCE re where re.resource_id = #{resourceId}
+	</select>  
+	<insert id="insert" parameterType="Resource" useGeneratedKeys="false">
+		insert into SYS_RESOURCE (
+			resource_id,resource_code,resource_name,resource_type,resource_url,parent_id
+		) values (
+			#{resourceId},#{resourceCode},#{resourceName},#{resourceType},#{url},#{parentId}
+		)
+	</insert>
+	<update id="update" parameterType="Resource">
+		update SYS_RESOURCE 
+		<set>   
+			<if test="resourceCode!= null and resourceCode!=''">resource_code = #{resourceCode},</if>
+			<if test="resourceName!= null and resourceName!=''">resource_name = #{resourceName},</if>
+			<if test="resourceType!= null and resourceType!=''">resource_type = #{resourceType},</if>
+			<if test="url!= null and url!=''">resource_url = #{url},</if>
+			<if test="parentId!= null and parentId!=''">parent_id = #{parentId}</if>
+		</set>
+		where resource_id = #{resourceId}
+	</update> 
+	<delete id="delete" parameterType="string">
+		delete from SYS_RESOURCE where resource_id = #{resourceId}
+	</delete>
+	
+	<select id="selectByRoleList" resultType="map" parameterType="java.util.List">
+		select 
+		res.resource_id as resourceId, res.resource_code as resourceCode, 
+		res.resource_name as resourceName, res.parent_id,
+		wm_concat(to_char(rr.role_id)) as roleId
+		from
+		sys_resource res, sys_role_resource rr
+		where
+		res.resource_id = rr.resource_id
+		<if test="list.size!=0">
+			and rr.role_id in(
+			<foreach collection="list" item="item" index="index" separator="UNION ALL">
+				(SELECT 
+				#{item.roleId}
+				FROM dual)
+			</foreach>
+			)
+		</if>
+		group by res.resource_id, res.resource_code, res.resource_name, res.parent_id
+
+	</select>
+	
+</mapper>

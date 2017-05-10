@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="JiGangInfo">
+    <resultMap type="JiGangInfo" id="jiGangInfoMap">
+        <id column="ji_gang_id" property="jiGangId"/>
+        <result column="delivery_id" property="deliveryId"/>
+        <result column="delivery_no" property="deliveryNo"/>
+        <result column="ji_gang_site" property="jiGangSite"/>
+        <result column="ji_gang_time" property="jiGangTime"/>
+        <result column="inspect_staus" property="inspectStaus"/>
+        <result column="create_time" property="createTime"/>
+        <result column="create_user_name" property="createUserName"/>
+    </resultMap>
+    <!-- 根据条件分页查询条目 -->
+    <select id="selectByCondition" resultMap="jiGangInfoMap" parameterType="map">
+        select * from(
+        select
+        ji_gang_id,delivery_id,delivery_no,ji_gang_site,
+        ji_gang_time,inspect_staus,
+        create_user_name,ROW_NUMBER() OVER(order by create_time desc) r
+        from
+        p_jigang_info pj
+        <where>
+            <if test="JiGangCondition!=null">
+                <if test="JiGangCondition.jiGangId != null and JiGangCondition.jiGangId != ''">
+                    and ji_gang_id = #{deliveryId.jiGangId}
+                </if>
+                <if test="JiGangCondition.deliveryId != null and JiGangCondition.deliveryId != ''">
+                    and delivery_id = #{deliveryId.deliveryId}
+                </if>
+                <if test="JiGangCondition.deliveryNo != null and JiGangCondition.deliveryNo != ''">
+                    and delivery_no = #{OrderCondition.deliveryNo}
+                </if>
+                <if test="JiGangCondition.jiGangSite != null and JiGangCondition.jiGangSite != ''">
+                    and ji_gang_site = #{OrderCondition.jiGangSite}
+                </if>
+            </if>
+        </where>
+        )s
+        where  s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1)
+    </select>
+
+    <!-- 根据条件查询条目数 -->
+    <select id="countByCondition" resultType="int" parameterType="map">
+        select count(*)
+        from
+        p_jigang_info pj
+        <where>
+            <if test="JiGangCondition!=null">
+                <if test="JiGangCondition.jiGangId != null and JiGangCondition.jiGangId != ''">
+                    and ji_gang_id = #{deliveryId.jiGangId}
+                </if>
+                <if test="JiGangCondition.deliveryId != null and JiGangCondition.deliveryId != ''">
+                    and delivery_id = #{deliveryId.deliveryId}
+                </if>
+                <if test="JiGangCondition.deliveryNo != null and JiGangCondition.deliveryNo != ''">
+                    and delivery_no = #{OrderCondition.deliveryNo}
+                </if>
+                <if test="JiGangCondition.jiGangSite != null and JiGangCondition.jiGangSite != ''">
+                    and ji_gang_site = #{OrderCondition.jiGangSite}
+                </if>
+            </if>
+        </where>
+    </select>
+    <delete id="delete" parameterType="string">
+        delete from p_jigang_info where ji_gang_id = #{jiGangId}
+    </delete>
+    <!-- 根据ID查询单个实体 -->
+    <select id="selectByPk" resultMap="jiGangInfoMap" parameterType="string">
+        select * from p_jigang_info where ji_gang_id = #{jiGangId}
+    </select>
+    <!-- 编辑 -->
+    <update id="update" parameterType="JiGangInfo">
+        update p_jigang_info
+        <set>
+            ji_gang_id = #{jiGangId}, delivery_id = #{deliveryId},
+            delivery_no = #{deliveryNo}, ji_gang_site = #{jiGangSite},
+            <if test="inspectStaus!=null and inspectStaus!=''">inspect_staus = #{inspectStaus},</if>
+        </set>
+        where ji_gang_id = #{jiGangId}
+    </update>
+    <!-- 插入仓库信息 -->
+    <insert id="insert" parameterType="JiGangInfo" useGeneratedKeys="false">
+        insert into p_jigang_info (
+        ji_gang_id,delivery_id,delivery_no,ji_gang_site,
+        ji_gang_time,inspect_staus,
+        create_time,create_user_name
+        ) values (
+        #{jiGangId},#{deliveryId},
+        #{deliveryNo},#{jiGangSite},
+        #{jiGangTime},#{inspectStaus},
+        #{createTime,jdbcType=TIMESTAMP},#{createUserName}
+        )
+    </insert>
+
+</mapper>

@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="QualityInspectDetail">
+    <resultMap id="qualityInspectDetailMap" type="QualityInspectDetail">
+        <id column="quality_inspect_id" property="qualityInspectId"/>
+        <result column="materia_inspect_id" property="materiaInspectId"/>
+        <result column="materials_id" property="materialsId"/>
+        <result column="wbs_id" property="wbsId"/>
+        <result column="receipt_code" property="receiptCode"/>
+        <result column="inspect_no" property="inspectNo"/>
+        <result column="packing_no" property="packingNo" />
+        <result column="materials_code" property="materialsCode"  />
+        <result column="materials_describe" property="materialsDescribe" />
+        <result column="additional_1" property="additional1"  />
+        <result column="additional_2" property="additional2"  />
+        <result column="additional_3" property="additional3"  />
+        <result column="additional_4" property="additional4" />
+        <result column="wbs_code" property="wbsCode"/>
+        <result column="matterials_unit_main" property="materialsUnitMain" />
+        <result column="purchase_count" property="purchaseCount" />
+        <result column="dianshou_count" property="dianshouCount" />
+        <result column="qualified_qty" property="qualifiedQty"  />
+        <result column="un_qualified_qty" property="unQualifiedQty" />
+        <result column="appearance_inspect" property="appearanceInspect"/>
+        <result column="recheck_inspect" property="recheckInspect" />
+        <result column="product_date" property="productDate" />
+        <result column="quality_date" property="qualityDate" />
+        <result column="delivery_qty" property="deliveryQty" />
+        <result column="current_delivery_qty" property="currentDeliveryQty" />
+<<<<<<< .mine
+        <result column="receipt_org_id" property="receiptOrgId" />
+=======
+        <result column="receipt_org_id" property="receiptOrgId"/>
+>>>>>>> .r880
+    </resultMap>
+
+    <!-- 提供实物入库管理模块数据进行筛选-->
+    <select id="selectInspectDetail" resultMap="qualityInspectDetailMap" parameterType="map">
+        select * from(
+        select
+        de.quality_inspect_id,qu.materia_inspect_id,de.receipt_code,de.materials_code,
+        de.packing_no,de.materials_describe,de.additional_1,de.additional_2,de.additional_3,
+        de.additional_4,de.wbs_code,de.matterials_unit_main,de.purchase_count,de.dianshou_count,
+        de.qualified_qty,de.un_qualified_qty,de.appearance_inspect,de.recheck_inspect,
+        de.product_date,de.quality_date,de.delivery_qty,de.current_delivery_qty,de.materials_id,
+        de.wbs_id,de.inspect_no,de.receipt_org_id
+        from
+        I_QUALITY_INSPECT_DETAIL de
+        left join I_QUALITY_INSPECT qu  on qu.materia_inspect_id=de.MATERIA_INSPECT_ID
+        <where>
+            de.qualified_qty > 0 and de.qualified_qty is not null and qu.inspect_staus ='billStaus_b' and qu.data_source != 'direct'
+            <if test="QualityInspectDetailCondition!=null">
+                <if test="QualityInspectDetailCondition.receiptCode != null and QualityInspectDetailCondition.receiptCode != ''">
+                    and de.receipt_code = #{QualityInspectDetailCondition.receiptCode}
+                </if>
+                <if test="QualityInspectDetailCondition.materialsCode != null and QualityInspectDetailCondition.materialsCode != ''">
+                    and de.materials_code = #{QualityInspectDetailCondition.materialsCode}
+                </if>
+                <if test="QualityInspectDetailCondition.packingNo!= null and QualityInspectDetailCondition.packingNo != ''">
+                    and de.packing_no = #{QualityInspectDetailCondition.packingNo}
+                </if>
+                <if test="QualityInspectDetailCondition.inspectNo!= null and QualityInspectDetailCondition.inspectNo != ''">
+                    and de.inspect_no = #{QualityInspectDetailCondition.inspectNo}
+                </if>
+            </if>
+        </where>
+        )
+    </select>
+
+    <!-- 根据条件分页查询条目 -->
+    <select id="selectByCondition" resultMap="qualityInspectDetailMap" parameterType="map">
+        select * from(
+        select
+        de.quality_inspect_id,qu.materia_inspect_id,de.receipt_code,de.materials_code,
+        de.packing_no,de.materials_describe,de.additional_1,de.additional_2,de.additional_3,
+        de.additional_4,de.wbs_code,de.matterials_unit_main,de.purchase_count,de.dianshou_count,
+        de.qualified_qty,de.un_qualified_qty,de.appearance_inspect,de.recheck_inspect,
+        de.product_date,de.quality_date,de.delivery_qty,de.current_delivery_qty,de.materials_id,
+        de.wbs_id,de.inspect_no,de.receipt_org_id
+        from
+        I_QUALITY_INSPECT_DETAIL de
+        left join I_QUALITY_INSPECT qu  on qu.materia_inspect_id=de.MATERIA_INSPECT_ID
+        <where>
+            1=1
+            <if test="QualityInspectDetailCondition!=null">
+                <if test="QualityInspectDetailCondition.receiptCode != null and QualityInspectDetailCondition.receiptCode != ''">
+                    and de.receipt_code = #{QualityInspectDetailCondition.receiptCode}
+                </if>
+                <if test="QualityInspectDetailCondition.materialsCode != null and QualityInspectDetailCondition.materialsCode != ''">
+                    and de.materials_code = #{QualityInspectDetailCondition.materialsCode}
+                </if>
+                <if test="QualityInspectDetailCondition.packingNo!= null and QualityInspectDetailCondition.packingNo != ''">
+                    and de.packing_no = #{QualityInspectDetailCondition.packingNo}
+                </if>
+                <if test="QualityInspectDetailCondition.inspectNo!= null and QualityInspectDetailCondition.inspectNo != ''">
+                    and de.inspect_no = #{QualityInspectDetailCondition.inspectNo}
+                </if>
+            </if>
+        </where>
+        )
+    </select>
+
+    <!-- 根据主表id删除质检明细条目 -->
+    <delete id="delete" parameterType="string">
+        delete from i_quality_inspect_detail where materia_inspect_id = #{materiaInspectId}
+    </delete>
+    <!-- 根据id查询质检明细条目 -->
+    <select id="selectByMaterialsId" resultMap="qualityInspectDetailMap">
+        select * from i_quality_inspect_detail iq left join I_QUALITY_INSPECT i on iq.quality_inspect_id = i.quality_inspect_id where i.materia_inspect_id=#{materiaInspectId}
+    </select>
+
+    <!-- 根据条件查询条目数 -->
+    <select id="countByCondition" resultType="int" parameterType="map">
+        select count(*)
+        from
+        I_QUALITY_INSPECT_DETAIL
+    </select>
+
+    <!-- 插入一个实体 -->
+    <insert id="insert" parameterType="QualityInspectDetail" useGeneratedKeys="false">
+        insert into  I_QUALITY_INSPECT_DETAIL(
+        packing_no,receipt_code,materials_code,materials_describe,additional_1,additional_2,additional_3
+        ,additional_4,wbs_code,matterials_unit_main,purchase_count,dianshou_count,qualified_qty,un_qualified_qty,
+        appearance_inspect,recheck_inspect,product_date,quality_date,delivery_qty,current_delivery_qty,wbs_id,
+        materials_id,inspect_no,receipt_org_id
+        ) values(
+        #{packingNo},#{receiptCode},#{materialsCode},#{materialsDescribe},#{additional1},#{additional2}
+        ,#{additional3},#{additional4},#{wbsCode},#{materialsUnitMain},#{purchaseCount,jdbcType=DECIMAL},#{dianshouCount,jdbcType=DECIMAL},
+        #{qualifiedQty,jdbcType=DECIMAL},#{unQualifiedQty,jdbcType=DECIMAL},#{appearanceInspect},#{recheckInspect},#{productDate,jdbcType=TIMESTAMP},#{qualityDate,jdbcType=TIMESTAMP},
+        #{deliveryQty,jdbcType=DECIMAL},#{currentDeliveryQty,jdbcType=DECIMAL},#{wbsId},#{materialsId},#{inspectNo},#{receiptOrgId}
+        )
+
+    </insert>
+
+    <!-- 删除一个实体 -->
+    <delete id="deleteQualityInspectDetail " parameterType="string">
+        delete  from I_QUALITY_INSPECT_DETAIL
+        <where>
+            quality_inspect_id = #{qualityInspectId}
+        </where>
+    </delete>
+
+    <!-- 批量插入质检明细表 -->
+    <insert id="insertList" parameterType="java.util.List" useGeneratedKeys="false">
+        insert into I_QUALITY_INSPECT_DETAIL
+        (
+        packing_no,
+        receipt_code,
+        materials_code,
+        materials_describe,
+        additional_1,
+        additional_2,
+        additional_3,
+        additional_4,
+        wbs_code,
+        matterials_unit_main,
+        purchase_count,
+        dianshou_count,
+        qualified_qty,
+        un_qualified_qty,
+        appearance_inspect,
+        recheck_inspect,
+        product_date,
+        quality_date,
+        delivery_qty,
+        current_delivery_qty,
+        wbs_id,
+        materials_id,
+        quality_inspect_id,
+        inspect_no,
+        materia_inspect_id,
+        receipt_org_id
+        )
+        SELECT A.*
+        FROM(
+        <foreach collection="list" item="item" index="index" separator="UNION ALL">
+            (SELECT
+            #{item.packingNo} packing_no,
+            #{item.receiptCode} receipt_code,
+            #{item.materialsCode} materials_code,
+            #{item.materialsDescribe} materials_describe,
+            #{item.additional1} additional_1,
+            #{item.additional2} additional_2,
+            #{item.additional3} additional_3,
+            #{item.additional4} additional_4,
+            #{item.wbsCode} wbs_code,
+            #{item.materialsUnitMain} matterials_unit_main,
+            #{item.purchaseCount,jdbcType=DECIMAL} purchase_count,
+            #{item.dianshouCount,jdbcType=DECIMAL} dianshou_count,
+            #{item.qualifiedQty,jdbcType=DECIMAL} qualified_qty,
+            #{item.unQualifiedQty,jdbcType=DECIMAL} un_qualified_qty,
+            #{item.appearanceInspect} appearance_inspect,
+            #{item.recheckInspect} recheck_inspect,
+            #{item.productDate,jdbcType=TIMESTAMP} product_date,
+            #{item.qualityDate,jdbcType=TIMESTAMP} quality_date,
+            #{item.deliveryQty,jdbcType=DECIMAL} delivery_qty,
+            #{item.currentDeliveryQty,jdbcType=DECIMAL} current_delivery_qty,
+            #{item.wbsId} wbs_id,
+            #{item.materialsId} materials_id,
+            #{item.qualityInspectId} quality_inspect_id,
+            #{item.inspectNo} inspect_no,
+            #{item.materiaInspectId} materia_inspect_id,
+            #{item.receiptOrgId} receipt_org_id
+            FROM dual)
+        </foreach>
+        )A
+    </insert>
+</mapper>

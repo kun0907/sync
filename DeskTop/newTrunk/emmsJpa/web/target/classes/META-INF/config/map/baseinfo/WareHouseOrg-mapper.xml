@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="WarehouseOrg" >
+  <resultMap id="wareHouseOrgMap" type="WarehouseOrg" >
+  	<association property="wareHouse" resultMap="WareHouse.wareHouseMap"></association>
+  	<association property="organization" column="org_id" javaType="Organization">
+  		<id column="org_id" property="orgId" />
+		<result column="org_code" property="orgCode"/>
+		<result column="org_name" property="orgName"/>
+  	</association>
+  </resultMap>
+  <!-- 批量插入仓库机构表 -->
+	<insert id="insertList" parameterType="java.util.List" useGeneratedKeys="false">
+		insert into b_warehouse_org
+		(warehouse_id,org_id)
+		SELECT A.*
+		FROM(
+		<foreach collection="list" item="item" index="index" separator="UNION ALL">
+			(SELECT 
+			#{item.wareHouse.warehouseId,jdbcType=VARCHAR} warehouse_id,
+			#{item.organization.orgId,jdbcType=VARCHAR} org_id
+			FROM dual)
+		</foreach>
+		)A 
+	</insert>
+	<!-- 根据仓库id删除仓库机构表 -->
+	<delete id="deleteOrgBywareHouseId" parameterType="string">
+		delete from b_warehouse_org bwo
+		<where>
+			bwo.warehouse_id = #{wareHouse.wareHouseId}
+		</where>
+	</delete>
+  	<!-- 根据组织机构id删除组织机构类型表 -->	
+	<select id="selectWareHouseByOrg" resultMap="wareHouseOrgMap">
+		select * from b_warehouse_org bwo
+		<where>
+			bwo.org_id = #{org_id}
+		</where>
+	</select>
+</mapper>

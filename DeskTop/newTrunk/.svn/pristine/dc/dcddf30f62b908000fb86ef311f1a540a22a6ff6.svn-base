@@ -1,0 +1,67 @@
+body {
+	width: 100%;
+  	height: 100%;
+  	background-size: 100% 100%;
+  	background: url('../images/mainbg.png') no-repeat;
+}
+
+.content .main_con .panel {
+  margin-top: 390px;
+  border-color: #3691ff;
+}
+.content .main_con .panel div.panel-heading {
+  background: #3691ff;
+  color: #fff;
+}
+.content .main_con .panel div.panel-heading i {
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+  display: inline-block;
+  position: relative;
+  top: 2px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.content .main_con .panel div.panel-heading i[class="icon_notice"] {
+  background-image: url("../images/icon.png");
+  background-repeat: no-repeat;
+  background-position: -57px 0;
+}
+.content .main_con .panel div.panel-heading i[class="icon_remind"] {
+  background-image: url("../images/icon.png");
+  background-repeat: no-repeat;
+  background-position: -89px 0;
+}
+.content .main_con .panel div.panel-heading i[class="icon_warn"] {
+  background-image: url("../images/icon.png");
+  background-repeat: no-repeat;
+  background-position: -72px 0;
+}
+.content .main_con .panel div.panel-heading a[class="more"] {
+  float: right;
+  color: #fff;
+  font-size: 8px;
+  position: relative;
+  top: 2px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.content .main_con .panel div.panel-body li i {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-width: 4px;
+  border-color: transparent transparent transparent #353535;
+  border-style: dashed dashed dashed solid;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.content .main_con .panel div.panel-body li a {
+  color: #353535;
+  font-size: 10px;
+  margin-left: 5px;
+}

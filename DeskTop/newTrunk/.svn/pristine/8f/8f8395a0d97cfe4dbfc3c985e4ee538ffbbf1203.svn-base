@@ -1,0 +1,397 @@
+<%@ page language="java" import="java.util.*" pageEncoding="UTF-8" %>
+<%@ include file="/WEB-INF/jsp/common/includes.jsp" %>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+    <title>编辑页</title>
+    <%@ include file="/WEB-INF/jsp/common/common.jsp" %>
+    <meta http-equiv="Content-Type" content="application/json;charset=utf-8">
+</head>
+<body>
+<div class="easyui-panel" title="首页->采购管理->供应商发货管理->编辑" data-options="fit:true,border:false">
+    <form id="ff" method="post">
+        <input type="hidden" class="easyui-textbox" name="deliveryId" id="deliveryId" value="${deliveryId}"/>
+
+        <div style="margin:20px">
+            <input class="easyui-textbox" id="deliveryNo" name="deliveryNo" editable="false" style="width:20%"
+                   data-options="label:'发货单号:'">
+            <input class="easyui-combobox" id="deliveryState" readonly="true" name="deliveryState" style="width:20%"
+                   data-options="label:'单据状态:'">
+            <input class="easyui-datebox date_field" id="expectedArrivalDate" readonly="true" name="expectedArrivalDate"
+                   style="width:20%" data-options="label:'预到货时间:'">
+            <input class="easyui-combobox" id="supplier" readonly="true" style="width:20%" data-options="label:'供应商:'">
+        </div>
+        <div style="text-left: center;width:90%">
+            <a href="${emms}/purchase/supplierDelivery.do?cmd=query" iconCls='icon-back'
+               class="easyui-linkbutton">返回</a>
+        </div>
+        <div class="easyui-layout" style="width:100%;height: 100%">
+            <div data-options="region:'west',split:true" style="width:50%;">
+                <div class="easyui-panel" title="包装发货明细" data-options="fit:true,border:false">
+                    <table title="包装明细" class="easyui-treegrid" id="table"></table>
+                </div>
+            </div>
+            <div data-options="region:'center'" title="包装物料列表">
+                <table id="detail" auto-resize="true" class="easyui-datagrid" width="100%"></table>
+            </div>
+            <div data-options="region:'south',split:true" style="width:100%;height: 500px">
+                <div class="easyui-panel" title="运输明细" data-options="fit:true,border:false">
+                    <table id="vehicle" auto-resize="true" class="easyui-datagrid" title="运输明细列表" width="100%"></table>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script type="text/javascript">
+    var packageDetail = [];
+    var num = 0;
+    var packageNoList = [];
+    var lastIndex;
+    var dictionary = {};
+    function uuid() {
+        var s = [];
+        var hexDigits = "0123456789abcdef";
+        for (var i = 0; i < 36; i++) {
+            s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+        }
+        s[14] = "4";  // bits 12-15 of the time_hi_and_version field to 0010
+        s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1);  // bits 6-7 of the clock_seq_hi_and_reserved to 01
+        s[8] = s[13] = s[18] = s[23] = "";
+        var uuid = s.join("");
+        return uuid;
+    }
+    function convert(rows) {
+        function exists(rows, parentId) {
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].id == parentId) return true;
+            }
+            return false;
+        }
+
+        var nodes = [];
+        // get the top level nodes
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            if (!exists(rows, row._parentId)) {
+                nodes.push({
+                    id: row.id,
+                    packingNo: row.packingNo,
+                    packingWeight: row.packingWeight,
+                    packingType: row.packingType,
+                    packingSize: row.packingSize
+                });
+            }
+        }
+        var toDo = [];
+        for (var i = 0; i < nodes.length; i++) {
+            toDo.push(nodes[i]);
+        }
+        while (toDo.length) {
+            var node = toDo.shift();	// the parent node
+            // get the children nodes
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                if (row._parentId == node.id) {
+                    var child = {
+                        id: row.id,
+                        packingNo: row.packingNo,
+                        packingWeight: row.packingWeight,
+                        packingType: row.packingType,
+                        packingSize: row.packingSize
+                    };
+                    if (node.children) {
+                        node.children.push(child);
+                    } else {
+                        node.children = [child];
+                    }
+                    toDo.push(child);
+                }
+            }
+        }
+        return nodes;
+    }
+    function getValueByKey(key) {
+        return dictionary[key];
+    }
+    $(function () {
+        $('#supplier').combobox({
+            url: '${emms}/system/organization.do?cmd=selectOrgByType&orgTypeCode=supplier',
+            valueField: 'orgId',
+            textField: 'orgName',
+            multiple: false
+        });
+        var supplierId = '${supplierId}';
+        if (null != supplierId && supplierId != '') {
+            $('#supplier').combobox('readonly', true);
+            $('#supplier').combobox('select', supplierId);
+        }
+        $('#deliveryState').combobox({
+            url: '${emms}/system/businessDictionary.do?cmd=loadDicByCode&dicCode=delivery_state',
+            valueField: 'dictionaryCode',
+            textField: 'dictionaryName'
+        });
+        $("#deliveryState").combobox('disable');
+        $('#ff').form('load', '${emms}/purchase/supplierDelivery.do?cmd=editDelivery&deliveryId=${deliveryId}');
+        $('#ff').form({
+            onLoadSuccess: function (data) {
+                $('#supplier').combobox('select', data.supplierId);
+            }
+        });
+        $.ajax({
+            url: '${emms}/system/businessDictionary.do?cmd=loadDicByCode&dicCode=package_type',
+            dataType: 'json',
+            type: 'POST',
+            async: false,
+            success: function (data) {
+                for (var i = 0; i < data.length; i++) {
+                    var obj = data[i].dictionaryCode;
+                    dictionary[obj] = data[i].dictionaryName;
+                }
+                packageTypeList = data;
+            }
+        });
+        var lastPackageId = null;
+        var checkPackageId = null;
+        $('#table').treegrid({
+            loadFilter: function (data, parentId) {
+                if (data.length == 0) {
+                    data.push({"id": '0', "packingNo": "结构树型图"});
+                }
+                return convert(data);
+            },
+            onAfterEdit: function (row, changes) {
+                if (row._parentId == '0') {
+                    packageNoList.push(row);
+                }
+            },
+            onClickRow: function (row) {//运用单击事件实现一行的编辑结束，在该事件触发前会先执行onAfterEdit事件
+                var rowIndex = row.id;
+                if (lastIndex != rowIndex) {
+                    $('#table').treegrid('endEdit', lastIndex);
+                    var allRows = $('#detail').datagrid("getRows");
+                    for (var i = 0; i < allRows.length; i++) {
+                        if (allRows[i].packingId != rowIndex) {
+                            packageDetail.push(allRows[i]);
+                        }
+                    }
+                    //获取缓存中的数据,有则默认带出来
+                    var detailByPackage = [];
+                    for (var i = 0; i < packageDetail.length; i++) {
+                        if (packageDetail[i].packingId == rowIndex) {
+                            detailByPackage.push(packageDetail[i]);
+                        }
+                    }
+                    //删掉了
+                    for (var i = 0; i < packageDetail.length;) {
+                        if (packageDetail[i].packingId == rowIndex) {
+                            packageDetail.splice(i, 1);
+                        } else {
+                            i++;
+                        }
+                    }
+                    if (detailByPackage.length > 0) {
+                        var data = '{"total":'+detailByPackage.length+',"rows":'+JSON.stringify(detailByPackage)+'}';
+                        data = $.parseJSON(data);
+                        $('#detail').datagrid('loadData',data);
+                    } else {
+                        $('#detail').datagrid('loadData', {total: 0, rows: []});
+                    }
+                    lastIndex = rowIndex;
+                }
+            }, onDblClickRow: function (row) {//运用双击事件实现对一行的编辑
+                var rowIndex = row.id;
+                if (row.id == '0') {
+                    alert("此节点为预置节点,不可编辑");
+                    return;
+                }
+                $('#table').treegrid('beginEdit', rowIndex);
+            },
+            animate: true,
+            collapsible: true,
+            fitColumns: true,
+            url: '${emms}/purchase/delivery/package.do?cmd=queryPackage&deliveryId=${deliveryId}',
+            idField: 'id',
+            treeField: 'packingNo',
+            onContextMenu: onContextMenu,
+            singleSelect: true,
+            columns: [[
+                {field: 'packingNo', title: '包装编号', align: 'center', width: '25%', editor: 'text'},
+                {
+                    field: 'packingType', title: '包装形式', align: 'center', width: '25%',
+                    formatter: function (value, row, index) {
+                        return getValueByKey(value);
+                    },
+                    editor: {
+                        type: 'combobox',
+                        options: {
+                            valueField: 'dictionaryCode',
+                            textField: 'dictionaryName',
+                            data: packageTypeList,
+                            required: true,
+                            editable: false
+                        }
+                    }
+                },
+                {field: 'packingWeight', title: '包装重量', align: 'center', width: '25%', editor: 'numberbox'},
+                {field: 'packingSize', title: '包装尺寸', align: 'center', width: '25%', editor: 'numberbox'}
+            ]]
+        });
+        $('#detail').datagrid({
+            url: '${emms}/purchase/delivery/packageDetail.do?cmd=queryPackageByDelivery&deliveryId=${deliveryId}',
+            method: 'POST',
+            fitColumns: true,
+            showFooter: true,
+            rownumbers: true,
+            singleSelect: true,
+            onDblClickRow: function (row) {//运用双击事件实现对一行的编辑
+                $('#detail').datagrid('beginEdit', row);
+            },
+            onClickRow: function (row) {//运用单击事件实现一行的编辑结束，在该事件触发前会先执行onAfterEdit事件
+                $('#detail').edatagrid('endEdit', lastIndex);
+                $('#detail').edatagrid('endEdit', row);
+                lastIndex = row;
+            },
+            columns: [[
+                {field: 'docSourceNo', title: '采购订单编号', align: 'center', width: '11%'},
+                {field: 'materialsCode', title: '物资编码', align: 'center', width: '11%'},
+                {field: 'wbsCode', title: 'WBS', align: 'center', width: '11%'},
+                {field: 'deMainUnit', title: '计量单位', align: 'center', width: '11%'},
+                {field: 'purchaseNum', title: '采购数量', align: 'center', width: '11%'},
+                {field: 'deliveryedNum', title: '已发货数量', align: 'center', width: '11%'},
+                {
+                    field: 'deliveryMainCount',
+                    title: '预发货数量',
+                    align: 'center',
+                    width: '11%',
+                    editor: {type: 'numberbox', min: 0, precision: 0, value: 0}
+                },
+                {field: 'productionDate', title: '生产日期', align: 'center', width: '11%', editor: {type: 'datebox'}},
+                {field: 'bzq', title: '保质期', align: 'center', width: '11%', editor: {type: 'datebox'}}
+            ]],
+            loadFilter: function (data) {
+                for (var i = 0; i < data.length; i++) {
+                    var detail = {};
+                    detail.docSourceNo = data[i].docSourceNo;
+                    detail.materialsCode = data[i].materialsCode;
+                    detail.wbsCode = data[i].wbsCode;
+                    detail.deMainUnit = data[i].deMainUnit;
+                    detail.purchaseNum = data[i].purchaseNum;
+                    detail.deliveryedNum = data[i].deliveryCount;
+                    detail.deliveryMainCount = data[i].deliveryMainCount;
+                    detail.productionDate = data[i].productionDate;
+                    detail.bzq = data[i].bzq;
+                    detail.packingId = data[i].packingId;
+                    packageDetail.push(detail);
+                }
+                return packageDetail;
+            }
+        });
+
+        $.ajax({
+            url: '${emms}/system/businessDictionary.do?cmd=loadDicByCode&dicCode=transport_mode',
+            dataType: 'json',
+            type: 'POST',
+            async: false,
+            success: function (data) {
+                for (var i = 0; i < data.length; i++) {
+                    var obj = data[i].dictionaryCode;
+                    dictionary[obj] = data[i].dictionaryName;
+                }
+                packageTypeList = data;
+            }
+        });
+        $('#vehicle').datagrid({
+            url: '${emms}/purchase/delivery/vehicle.do?cmd=queryVehicleData&deliveryId=${deliveryId}',
+            method: 'POST',
+            fitColumns: true,
+            rownumbers: true,
+            showFooter: true,
+            singleSelect: false,
+            columns: [[
+                {
+                    field: 'transportMode', title: '运输方式', align: 'center', width: '25%',
+                    formatter: function (value, row, index) {
+                        return getValueByKey(value);
+                    },
+                    editor: {
+                        type: 'combobox',
+                        options: {
+                            valueField: 'dictionaryCode',
+                            textField: 'dictionaryName',
+                            data: packageTypeList,
+                            required: true,
+                            editable: false
+                        }
+                    }
+                },
+                {field: 'plateNumber', title: '牌号', align: 'center', width: '25%', editor: 'text'},
+                {field: 'chargePersonName', title: '联系人姓名', align: 'center', width: '25%', editor: 'text'},
+                {
+                    field: 'chargePersonPhone', title: '联系人电话', align: 'center', width: '24%', editor: {
+                    type: 'text',
+                    options: {
+                        validType: 'mobile'
+                    }
+                }
+                }/*,
+                 {field: 'packageNo', title: '包装编号', align: 'center', width: '17%',editor:{
+                 type:'combobox',
+                 options:{
+                 valueField:'packingNo',
+                 textField:'packingNo',
+                 data:packageNoList,
+                 *//*required:true,*//*
+                 editable:false,
+                 multiple:true
+                 }
+                 }}*/
+            ]]
+        });
+        $('#vehicle').datagrid({
+            onDblClickCell: function (index, field, value) {
+                num = index;
+                $(this).datagrid('beginEdit', index);
+                var ed = $(this).datagrid('getEditor', {index: index, field: field});
+                $(ed.target).combobox('setValues', packageNoList);
+            }
+        });
+    });
+
+    //包装单击右键时触发事件
+    function onContextMenu(e, row) {
+        e.preventDefault();
+        $(this).treegrid('select', row.id);
+        $('#mm').menu('show', {
+            left: e.pageX,
+            top: e.pageY
+        });
+    }
+
+
+    //弹出框的确认按钮执行函数
+    function checkOrderDetail(rows) {
+        $("supplierId").combobox("readonly", true);
+        for (var i = 0; i < rows.length; i++) {
+            $('#detail').datagrid('appendRow', {
+                "packingId": checkPackageId,
+                "wbsId": rows[i].wbsId,
+                "wbsCode": rows[i].wbsCode,
+                "deliveryMainCount": 0,
+                "deMainUnit": rows[i].orderDetailUnit,
+                "purchaseNum": rows[i].orderDetailCount,
+                "supplierId": rows[i].supplierId,
+                "supplierName": rows[i].supplierName,
+                "materialsId": rows[i].materialsId,
+                "materialsCode": rows[i].materialsCode,
+                /*"materialsDescribe": rows[i].materialsDescribe,*/
+                "docSourceNo": rows[i].orderCode,
+                "docSourceDetailRowno": rows[i].orderCode,
+                "docSourceDetailId": rows[i].orderDetailId,
+                "docSourceType": 'purchase'
+            });
+        }
+    }
+</script>
+</body>
+</html>

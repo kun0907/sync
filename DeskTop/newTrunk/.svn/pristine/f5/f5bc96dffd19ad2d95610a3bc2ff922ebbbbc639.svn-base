@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Storagelocation">
+    <resultMap type="Storagelocation" id="storagelocationMap">
+		<id column="storagelocation_id" property="storagelocationId"/>
+		<result column="reservoirarea_id" property="reservoirareaId"/>
+		<result column="warehouse_id" property="warehouseId"/>
+		<result column="storagelocation_code" property="storagelocationCode"/>
+		<result column="storagelocation_name" property="storagelocationName"/>
+		<result column="storagelocation_type" property="storagelocationType"/>
+		<result column="state" property="state"/>
+		<result column="longs" property="longs"/>
+		<result column="widths" property="widths"/>
+		<result column="height" property="height"/>
+		<result column="volume" property="volume"/>
+		<result column="bearing" property="bearing"/>
+		<result column="create_user_name" property="createUserName"/>
+		<result column="create_user_id" property="createUserId"/>
+		<result column="create_time" property="createTime"/>
+	</resultMap>
+	<sql id="column">storagelocation_id,reservoirarea_id,warehouse_id,storagelocation_code,
+	    storagelocation_name,storagelocation_type,state,longs,widths,height,volume,bearing,create_user_name,create_user_id,create_time</sql>   
+     <!-- 根据条件分页查询条目 -->
+	<select id="selectByCondition" resultMap="storagelocationMap" parameterType="map">
+		select * from(
+			select storagelocation_id,reservoirarea_id,warehouse_id,storagelocation_code,
+	        storagelocation_name,dic.dictionary_name as storagelocation_type,longs,widths,height,volume,bearing,
+			ROW_NUMBER() OVER(order by st.storagelocation_id) r
+			from b_storagelocation st
+			left join sys_dictionary dic
+			on dic.dictionary_code = st.storagelocation_type
+			<where>
+				dic.is_del='1'
+				<if test="StoragelocationCondition.warehouseId!=null and StoragelocationCondition.warehouseId!=''">
+					and st.warehouse_id = #{StoragelocationCondition.warehouseId}
+				</if>
+				<if test="StoragelocationCondition.reservoirareaId!=null and StoragelocationCondition.reservoirareaId!=''">
+					and st.reservoirarea_id = #{StoragelocationCondition.reservoirareaId}
+				</if>
+				<if test="StoragelocationCondition.storagelocationCode!=null and StoragelocationCondition.storagelocationCode!=''">
+					and st.storagelocation_code = #{StoragelocationCondition.storagelocationCode}
+				</if>
+				<if test="StoragelocationCondition.storagelocationName!=null and StoragelocationCondition.storagelocationName!=''">
+					and st.storagelocation_name = #{StoragelocationCondition.storagelocationName}
+				</if>
+				<if test="StoragelocationCondition.storagelocationType!=null and StoragelocationCondition.storagelocationType!=''">
+					and st.storagelocation_type = #{StoragelocationCondition.storagelocationType}
+				</if>
+				<if test="StoragelocationCondition.state!=null and StoragelocationCondition.state!=''">
+					and st.state = #{StoragelocationCondition.state}
+				</if>
+			</where>
+		) s
+		where s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1)
+	</select>
+	<!-- 根据条件查询条目数 -->
+	<select id="countByCondition" resultType="int" parameterType="map">
+		select count(*) from b_storagelocation st
+		left join sys_dictionary dic
+		on dic.dictionary_code = st.storagelocation_type
+			<where>
+				dic.is_del='1'
+				<if test="StoragelocationCondition.reservoirareaId!=null and StoragelocationCondition.reservoirareaId!=''">
+					and st.reservoirarea_id = #{StoragelocationCondition.reservoirareaId}
+				</if>
+				<if test="StoragelocationCondition.storagelocationCode!=null and StoragelocationCondition.storagelocationCode!=''">
+					and st.storagelocation_code = #{StoragelocationCondition.storagelocationCode}
+				</if>
+				<if test="StoragelocationCondition.storagelocationName!=null and StoragelocationCondition.storagelocationName!=''">
+					and st.storagelocation_name = #{StoragelocationCondition.storagelocationName}
+				</if>
+				<if test="StoragelocationCondition.storagelocationType!=null and StoragelocationCondition.storagelocationType!=''">
+					and st.storagelocation_type = #{StoragelocationCondition.storagelocationType}
+				</if>
+				<if test="StoragelocationCondition.state!=null and StoragelocationCondition.state!=''">
+					and st.state = #{StoragelocationCondition.state}
+				</if>
+			</where>
+	</select>
+	<!-- 根据主键查询储位信息 -->
+	<select id="selectByPk" resultMap="storagelocationMap" parameterType="string">
+		select storagelocation_id,reservoirarea_id,warehouse_id,storagelocation_code,
+	    storagelocation_name,storagelocation_type,state,longs,widths,height,volume,bearing,w.create_user_name,w.create_user_id,w.create_time from b_storagelocation w 
+		<where>
+			storagelocation_id = #{storagelocationId}
+		</where>
+	</select>
+	<delete id="delete" parameterType="string">
+		delete from b_storagelocation where storagelocation_id = #{storagelocationId}
+	</delete>
+	<delete id="deleteByWareId" parameterType="string">
+		delete from b_storagelocation where warehouse_id = #{warehouseId}
+	</delete>
+	<delete id="deleteByResId" parameterType="string">
+		delete from b_storagelocation where reservoirarea_id = #{reservoirareaId}
+	</delete>
+	<!-- 插入储位信息 -->
+	<insert id="insert" parameterType="Storagelocation" useGeneratedKeys="false">
+		insert into b_storagelocation (
+			storagelocation_id,reservoirarea_id,warehouse_id,storagelocation_code,
+	    storagelocation_name,storagelocation_type,state,longs,widths,
+	    height,volume,bearing,create_user_name,create_user_id,create_time
+		) values (
+			#{storagelocationId},#{reservoirareaId},#{warehouseId},#{storagelocationCode},
+			#{storagelocationName},#{storagelocationType},#{state},#{longs},
+			#{widths},#{height},#{volume},#{bearing},#{createUserName},#{createUserId},#{createTime}
+		)
+	</insert>
+	<!-- 批量插入组织机构类型表 -->
+	<insert id="insertList" parameterType="java.util.List" useGeneratedKeys="false">
+		insert into b_storagelocation
+		(storagelocation_id,reservoirarea_id,warehouse_id,storagelocation_code,
+	    storagelocation_name,storagelocation_type,state,longs,widths,
+	    height,volume,bearing,create_user_name,create_user_id,create_time)
+		SELECT A.*
+		FROM(
+		<foreach collection="list" item="item" index="index" separator="UNION ALL">
+		(SELECT 
+		#{item.storagelocationId} storagelocation_id,#{item.reservoirareaId} reservoirarea_id,#{item.warehouseId} warehouse_id,#{item.storagelocationCode} storagelocation_code,
+		#{item.storagelocationName} storagelocation_name,#{item.storagelocationType} storagelocation_type,#{item.state} state,#{item.longs} longs,
+		#{item.widths} widths,#{item.height} height,#{item.volume} volume,#{item.bearing} bearing,#{item.createUserName} create_user_name,#{item.createUserId} create_user_id,#{item.createTime} create_time
+		FROM dual)
+		</foreach>
+		)A 
+	</insert>
+	<!-- 更新储位信息 -->
+	<update id="update" parameterType="Storagelocation">
+		update b_storagelocation 
+		<set>   
+			storagelocation_type = #{storagelocationType},
+			longs = #{longs},
+			widths = #{widths},
+			height = #{height},
+			volume = #{volume},
+			bearing = #{bearing}
+		</set>
+		where storagelocation_id = #{storagelocationId}
+	</update>
+	<!-- 校验Code是否重复 -->
+	<select id="checkStoNo" parameterType="map" resultType="int">
+		 select count(*) from b_storagelocation se 
+		<where>
+		    se.storagelocation_code=#{stoNo} 
+		    <if test="stoId!= null and stoId!=''">and se.storagelocation_id != #{stoId}</if>
+		</where>
+	</select>
+</mapper>

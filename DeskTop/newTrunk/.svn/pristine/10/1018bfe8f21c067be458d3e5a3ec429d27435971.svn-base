@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="WareHouse">
+    <resultMap type="WareHouse" id="wareHouseMap">
+		<id column="warehouse_id" property="warehouseId"/>
+		<result column="warehouse_code" property="warehouseCode"/>
+		<result column="warehouse_name" property="warehouseName"/>
+		<result column="country" property="country"/>
+		<result column="city" property="city"/>
+		<result column="area" property="area"/>
+		<result column="acreage" property="acreage"/>
+		<result column="warehouse_type" property="warehouseType"/>
+		<result column="warehouse_state" property="warehouseState"/>
+		<result column="contacts" property="contacts"/>
+		<result column="phone" property="phone"/>
+		<result column="fax" property="fax"/>
+		<result column="remark" property="remark"/>
+		<result column="create_user_name" property="createUserName"/>
+		<result column="create_user_id" property="createUserId"/>
+		<result column="create_time" property="createTime"/>
+		<result column="org_id" property="orgId"/>
+	</resultMap>
+	<sql id="column">warehouse_id,warehouse_code,warehouse_name,country,city,area,acreage,warehouse_type,warehouse_state,contacts,phone,fax,remark,create_user_name,create_user_id,create_time,org_id</sql>   
+    <!-- 查找全部 -->
+	<select id="selectAll" resultMap="wareHouseMap">
+		select * from b_warehouse 
+	</select>
+	<!-- 查找公共仓库 -->
+	<select id="selectAllCommon" resultMap="wareHouseMap">
+		select * from b_warehouse where org_id is null
+	</select>
+	<!-- 根据条件分页查询条目 -->
+	<select id="selectByCondition" resultMap="wareHouseMap" parameterType="map">
+		select * from(
+			select warehouse_id,warehouse_code,warehouse_name,country.dictionary_name as country,
+			city.dictionary_name as city,area.dictionary_name as area,acreage,dic.dictionary_name as warehouse_type,contacts,phone,fax,remark,
+			ROW_NUMBER() OVER(order by w.warehouse_id) r
+			from b_warehouse w
+			left join sys_dictionary dic
+			on dic.dictionary_code = w.warehouse_type
+			left join sys_dictionary country
+			on country.dictionary_code = w.country
+			left join sys_dictionary city
+			on city.dictionary_code = w.city
+			left join sys_dictionary area
+			on area.dictionary_code = w.area
+			<where>
+				dic.is_del='1' and country.is_del='1' and city.is_del='1' and area.is_del='1'
+				<if test="WareHouseCondition.warehouseCode!=null and WareHouseCondition.warehouseCode!=''">
+					and w.warehouse_code = #{WareHouseCondition.warehouseCode}
+				</if>
+				<if test="WareHouseCondition.warehouseName!=null and WareHouseCondition.warehouseName!=''">
+					and w.warehouse_name = #{WareHouseCondition.warehouseName}
+				</if>
+				<if test="WareHouseCondition.warehouseType!=null and WareHouseCondition.warehouseType!=''">
+					and w.warehouse_type = #{WareHouseCondition.warehouseType}
+				</if>
+				<if test="WareHouseCondition.warehouseState!=null and WareHouseCondition.warehouseState!=''">
+					and w.warehouse_state = #{WareHouseCondition.warehouseState}
+				</if>
+				<if test="WareHouseCondition.warehouseIds.size>0">
+					 and w.warehouse_id in
+					 <foreach collection="WareHouseCondition.warehouseIds" item="item" open="(" close=")" separator=",">
+				      #{item}	
+			         </foreach> 
+				</if>
+			</where>
+		) s
+		where s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1)
+	</select>
+	<!-- 根据条件查询条目数 -->
+	<select id="countByCondition" resultType="int" parameterType="map">
+		select count(*) from b_warehouse w
+		left join sys_dictionary dic
+		on dic.dictionary_code = w.warehouse_type
+		left join sys_dictionary country
+		on country.dictionary_code = w.country
+		left join sys_dictionary city
+		on city.dictionary_code = w.city
+		left join sys_dictionary area
+		on area.dictionary_code = w.area
+		<where>
+			dic.is_del='1' and country.is_del='1' and city.is_del='1' and area.is_del='1'
+				<if test="WareHouseCondition.warehouseCode!=null and WareHouseCondition.warehouseCode!=''">
+					and w.warehouse_code = #{WareHouseCondition.warehouseCode}
+				</if>
+				<if test="WareHouseCondition.warehouseName!=null and WareHouseCondition.warehouseName!=''">
+					and w.warehouse_name = #{WareHouseCondition.warehouseName}
+				</if>
+				<if test="WareHouseCondition.warehouseType!=null and WareHouseCondition.warehouseType!=''">
+					and w.warehouse_type = #{WareHouseCondition.warehouseType}
+				</if>
+				<if test="WareHouseCondition.warehouseState!=null and WareHouseCondition.warehouseState!=''">
+					and w.warehouse_state = #{WareHouseCondition.warehouseState}
+				</if>
+				<if test="WareHouseCondition.warehouseIds.size>0">
+					 and w.warehouse_id in
+					 <foreach collection="WareHouseCondition.warehouseIds" item="item" open="(" close=")" separator=",">
+				      #{item}	
+			         </foreach> 
+				</if>
+			</where>
+	</select>
+	<!-- 根据主键查询仓库信息 -->
+	<select id="selectByPk" resultMap="wareHouseMap" parameterType="string">
+		select <include refid="column" /> from b_warehouse w
+		<where>
+			warehouse_id = #{warehouseId}
+		</where>
+	</select>
+	<delete id="delete" parameterType="string">
+		delete from b_warehouse where warehouse_id = #{warehouseId}
+	</delete>
+	<!-- 插入仓库信息 -->
+	<insert id="insert" parameterType="WareHouse" useGeneratedKeys="false">
+		insert into b_warehouse (
+			warehouse_id,warehouse_code,warehouse_name,country,city,area,acreage,warehouse_type,warehouse_state,contacts,phone,fax,remark,create_user_name,create_user_id,create_time,org_id
+		) values (
+			#{warehouseId},#{warehouseCode},#{warehouseName},#{country},#{city},#{area},#{acreage},#{warehouseType},#{warehouseState},#{contacts},#{phone},#{fax},#{remark},#{createUserName},#{createUserId},#{createTime},#{orgId}
+		)
+	</insert>
+	
+	<!-- 更新仓库信息 -->
+	<update id="update" parameterType="WareHouse">
+		update b_warehouse 
+		<set>
+			country = #{country},
+			city = #{city},
+			area = #{area},
+			acreage = #{acreage},
+			warehouse_type = #{warehouseType},
+			contacts = #{contacts},
+			phone = #{phone},
+			fax = #{fax},
+			remark = #{remark},
+			org_id = #{orgId}
+		</set>
+		where warehouse_id = #{warehouseId}
+	</update>
+	<!-- 校验Code是否重复 -->
+	<select id="checkStoNo" parameterType="map" resultType="int">
+		 select count(*) from b_warehouse se 
+		<where>
+		    se.warehouse_code=#{stoNo} 
+		    <if test="stoId!= null and stoId!=''">and se.warehouse_id != #{stoId}</if>
+		</where>
+	</select>
+	
+</mapper>

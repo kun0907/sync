@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="DesignCodeAttachment">
+    <resultMap type="DesignCodeAttachment" id="designCodeAttachmentMap">
+        <id column="design_e_id" property="designEId"/>
+        <result column="design_m_id" property="designMId" />
+        <result column="attachment_number" property="attachmentNumber" />
+        <result column="wbs_id" property="wbsId" />
+        <result column="equipment_no" property="equipmentNo" />
+        <result column="attachment_no" property="attachmentNo" />
+    </resultMap>
+    <!-- 批量插入设计院方法 -->
+    <insert id="insertList" parameterType="java.util.List" useGeneratedKeys="false">
+        insert into b_design_code_attachment
+        (design_e_id,design_m_id,
+        attachment_number,wbs_id,
+        equipment_no,attachment_no
+        )
+        SELECT A.*
+        FROM(
+        <foreach collection="list" item="item" index="index" separator="UNION ALL">
+            (SELECT
+            #{item.designEId} design_e_id,#{item.designMId} design_m_id,
+            #{item.attachmentNumber} attachment_number,#{item.wbsId} wbs_id,
+            #{item.equipmentNo} equipment_no,#{item.attachmentNo} attachment_no
+            FROM dual)
+        </foreach>
+        )A
+    </insert>
+    <!-- 查找 -->
+    <select id="selectByEAndM" resultMap="designCodeAttachmentMap" parameterType="string" >
+        select att.design_m_id,att.attachment_number,
+        co.design_code as design_e_id,
+        att.wbs_id,att.equipment_no,att.attachment_no
+        from b_design_code_attachment att
+        left join b_design_code co
+        on att.design_m_id = co.design_code_id
+        <where> att.design_e_id = #{designId}
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="OrderDetail">
+    <resultMap type="OrderDetail" id="orderDetailMap">
+        <id column="order_detail_id" property="orderDetailId"/>
+        <result column="order_id" property="orderId"/>
+        <result column="order_code" property="orderCode"/>
+        <result column="supplier_id" property="supplierId"/>
+        <result column="supplier_name" property="supplierName"/>
+        <result column="order_detail_sequence" property="orderDetailSequence"/>
+        <result column="materials_id" property="materialsId"/>
+        <result column="materials_code" property="materialsCode"/>
+        <result column="wbs_id" property="wbsId"/>
+        <result column="wbs_code" property="wbsCode"/>
+        <result column="order_detail_unit" property="orderDetailUnit"/>
+        <result column="order_detail_count" property="orderDetailCount"/>
+        <result column="order_detail_unit_price" property="orderDetailUnitPrice"/>
+        <result column="order_detail_total_price" property="orderDetailTotalPrice"/>
+        <result column="materials_describe" property="materialsDescribe"/>
+        <result column="additional_1" property="additional1"/>
+        <result column="additional_2" property="additional2"/>
+        <result column="additional_3" property="additional3"/>
+        <result column="additional_4" property="additional4"/>
+        <result column="order_detail_plan_count" property="orderDetailPlanCount"/>
+        <result column="delivery_count" property="deliveryCount"/>
+    </resultMap>
+    <delete id="delete" parameterType="string">
+        delete from p_order_detail where order_id = #{orderId}
+    </delete>
+    <insert id="insertList" parameterType="java.util.List" useGeneratedKeys="false">
+        insert into p_order_detail
+        (order_detail_id,order_id,
+        order_detail_sequence,materials_id,
+        materials_code,wbs_id,wbs_code,
+        order_detail_unit,order_detail_count,
+        order_detail_unit_price,order_detail_total_price,
+        materials_describe,additional_1,
+        additional_2,additional_3,
+        additional_4,order_detail_plan_count,delivery_count)
+        SELECT A.*
+        FROM(
+        <foreach collection="list" item="item" index="index" separator="UNION ALL">
+            (SELECT
+            #{item.orderDetailId} order_detail_id,#{item.orderId} order_id,
+            #{item.orderDetailSequence} order_detail_sequence,#{item.materialsId} materials_id,
+            #{item.materialsCode} materials_code,#{item.wbsId} wbs_id,#{item.wbsCode} wbs_code,
+            #{item.orderDetailUnit} order_detail_unit,#{item.orderDetailCount} order_detail_count,
+            #{item.orderDetailUnitPrice} order_detail_unit_price,#{item.orderDetailTotalPrice} order_detail_total_price,
+            #{item.materialsDescribe} materials_describe,#{item.additional1} additional_1,
+            #{item.additional2} additional_2,#{item.additional3} additional_3,
+            #{item.additional4} additional_4,#{item.orderDetailPlanCount} order_detail_plan_count,
+            #{item.deliveryCount} delivery_count
+            FROM dual)
+        </foreach>
+        )A
+    </insert>
+   <select id="selectByCondition" resultMap="orderDetailMap" parameterType="map">
+        select * from(
+        select
+        order_detail_id,po.order_id,po.order_code,po.supplier_id,po.supplier_name,
+        order_detail_sequence,materials_id,
+        materials_code,wbs_id,wbs_code,
+        order_detail_unit,order_detail_count,
+        order_detail_unit_price,order_detail_total_price,
+        materials_describe,additional_1,
+        additional_2,additional_3,
+        additional_4,order_detail_plan_count,
+        ROW_NUMBER() OVER(order by po.order_id) r
+        from
+        p_order_detail pod
+        left join p_order po
+        on pod.order_id=po.order_id
+       <where>
+           po.order_state='orderPass' and pod.order_detail_count>pod.delivery_count
+           <if test="OrderDetailCondition!=null">
+               <if test="OrderDetailCondition.orderId != null and OrderDetailCondition.orderId != ''">
+                   and pod.order_id = #{OrderDetailCondition.orderId}
+               </if>
+               <if test="OrderDetailCondition.materialsCode != null and OrderDetailCondition.materialsCode != ''">
+                   and pod.materials_code like  '%'|| #{OrderDetailCondition.materialsCode}|| '%'
+               </if>
+               <if test="OrderDetailCondition.materialsDescribe != null and OrderDetailCondition.materialsDescribe != ''">
+                   and pod.materials_describe like  '%'|| #{OrderDetailCondition.materialsDescribe}|| '%'
+               </if>
+               <if test="OrderDetailCondition.supplierId != null and OrderDetailCondition.supplierId != ''">
+                   and po.supplier_id = #{OrderDetailCondition.supplierId}
+               </if>
+               <if test="OrderDetailCondition.wbsCode != null and OrderDetailCondition.wbsCode != ''">
+                   and pod.wbs_code like  '%'|| #{OrderDetailCondition.wbsCode}|| '%'
+               </if>
+               <if test="OrderDetailCondition.orderIdList != null and OrderDetailCondition.orderIdList.size>0">
+                   and
+                   pod.order_id in
+                   <foreach collection="OrderDetailCondition.orderIdList" item="item" open="(" close=")" separator=",">
+                       #{item}
+                   </foreach>
+               </if>
+           </if>
+       </where>
+        )s
+    </select>
+    <!-- 根据条件查询条目数 -->
+    <select id="countByCondition" resultType="int" parameterType="map">
+        select count(*)
+        from
+        p_order_detail pod
+        left join p_order po
+        on pod.order_id=po.order_id
+        <where>
+            po.order_state='orderPass' and pod.order_detail_count>pod.delivery_count
+            <if test="OrderDetailCondition!=null">
+                <if test="OrderDetailCondition.orderId != null and OrderDetailCondition.orderId != ''">
+                    and pod.order_id = #{OrderDetailCondition.orderId}
+                </if>
+                <if test="OrderDetailCondition.materialsCode != null and OrderDetailCondition.materialsCode != ''">
+                    and pod.materials_code like  '%'|| #{OrderDetailCondition.materialsCode}|| '%'
+                </if>
+                <if test="OrderDetailCondition.materialsDescribe != null and OrderDetailCondition.materialsDescribe != ''">
+                    and pod.materials_describe like  '%'|| #{OrderDetailCondition.materialsDescribe}|| '%'
+                </if>
+                <if test="OrderDetailCondition.supplierId != null and OrderDetailCondition.supplierId != ''">
+                    and po.supplier_id = #{OrderDetailCondition.supplierId}
+                </if>
+                <if test="OrderDetailCondition.wbsCode != null and OrderDetailCondition.wbsCode != ''">
+                    and pod.wbs_code like  '%'|| #{OrderDetailCondition.wbsCode}|| '%'
+                </if>
+                <if test="OrderDetailCondition.orderIdList != null and OrderDetailCondition.orderIdList.size>0">
+                    and
+                    pod.order_id in
+                    <foreach collection="OrderDetailCondition.orderIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+            </if>
+        </where>
+    </select>
+    <!-- 根据ID查询单个实体 -->
+    <select id="selectByPk" resultMap="orderDetailMap" parameterType="string">
+        select * from p_order_detail where order_detail_id = #{orderDetailId}
+    </select>
+    <!-- 根据ID查询单个实体 -->
+    <select id="selectDetailByOrderId" resultMap="orderDetailMap" parameterType="map">
+        select * from p_order_detail where order_id = #{orderId}
+    </select>
+    <!-- 编辑 -->
+    <update id="update" parameterType="OrderDetail">
+        update p_order_detail
+        <set>
+            delivery_count = #{deliveryCount}
+        </set>
+        where order_detail_id = #{orderDetailId}
+    </update>
+</mapper>

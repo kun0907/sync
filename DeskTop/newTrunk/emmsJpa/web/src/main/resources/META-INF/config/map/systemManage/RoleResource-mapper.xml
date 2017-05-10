@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="RoleResource">
+	<resultMap type="RoleResource" id="roleResourceMap">
+		<result column="role_id" property="roleId"/>
+		<result column="resource_id" property="resourceId"/>
+		<result column="parent_role_id" property="parentRoleId"/>
+	</resultMap>
+	
+	
+	<!-- 批量插入实体 -->	
+	<insert id="batchInsert" parameterType="java.util.List" useGeneratedKeys="false">
+			insert into sys_role_resource
+			(role_id, resource_id, parent_role_id)
+			SELECT A.*
+			FROM(
+			<foreach collection="list" item="item" index="index" separator="UNION ALL">
+				(SELECT 
+				#{item.roleId,jdbcType=VARCHAR} role_id,
+				#{item.resourceId,jdbcType=VARCHAR} resource_id,
+				#{item.parentRoleId,jdbcType=VARCHAR} parent_role_id
+				FROM dual)
+			</foreach>
+			)A 
+	</insert>
+	
+	<!-- 删除一个实体 -->
+	<delete id="delete" parameterType="string">
+		delete from sys_role_resource where role_id=#{roleId}
+	</delete>
+	<!-- 根据给定的roles信息查询角色权限信息 -->
+	<select id="selectRoleResourceByRoleIds" parameterType="java.util.List" resultMap="roleResourceMap">
+		select * from sys_role_resource srr 
+		<where>
+			srr.role_id in 
+			<foreach collection="list" item="item" open="(" close=")" separator=",">
+				#{item}	
+			</foreach>
+		</where>
+		
+	</select>
+	<!-- 根据权限id查询角色权限信息 -->
+	<select id="findRoleResourceByResource" resultType="int" parameterType="string" >
+		select count(*) from sys_role_resource srr
+		<where>
+			srr.resource_id = #{resourceId}
+		</where>
+	</select>
+
+
+	<!-- 根据角色类型查询角色权限信息 -->
+	<select id="findRoleResourceByRoleType" resultMap="roleResourceMap" parameterType="string" >
+		select srr.* from sys_role_resource srr
+		left join sys_role sr on srr.role_id = sr.role_id
+		<where>
+			sr.role_type = #{roleType}
+		</where>
+	</select>
+</mapper>

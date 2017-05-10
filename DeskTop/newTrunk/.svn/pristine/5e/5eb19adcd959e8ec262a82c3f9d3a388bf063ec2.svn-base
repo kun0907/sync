@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Design">
+
+	<resultMap type="Design" id="designMap">
+		<id column="design_code_id" property="designId"/>
+		<result column="system_code_id" property="systemcodeId" />
+		<result column="design_org_id" property="designOrgId" />
+		<result column="design_code" property="designCode" />
+		<result column="design_name" property="designName" />
+		<result column="design_describe" property="designDescribe" />
+		<result column="design_unit_main" property="designUnitMain" />
+		<result column="design_type" property="designType" />
+		<result column="ismatching" property="isMatching" />
+		<result column="design_state" property="designState" />
+		<result column="additional_1" property="additional1" />
+		<result column="additional_2" property="additional2" />
+		<result column="additional_3" property="additional3" />
+		<result column="additional_4" property="additional4" />
+		<result column="design_unit_secondary" property="designUnitSecondary" />
+		<result column="design_conversion" property="designConversion" />
+		<result column="isdel" property="isdel" />
+	</resultMap>
+
+	<!-- 查询全部条目 -->
+	<select id="selectAll" resultMap="designMap">
+		select * from b_design_code
+	</select>
+
+	<!-- 根据条件分页查询条目 -->
+	<select id="selectByCondition" resultMap="designMap" parameterType="map">
+		select * from(
+		select
+		bc.design_code_id,
+		ms.materials_code as system_code_id,bc.isdel,
+		org.org_name as design_org_id,bc.design_unit_secondary,bc.design_conversion,
+		bc.design_code, bc.design_name, bc.design_describe,
+		bc.design_unit_main, bc.design_type, bc.ismatching,
+		dic.dictionary_name as design_state,
+		bc.additional_1, bc.additional_2, bc.additional_3, bc.additional_4,
+		ROW_NUMBER() OVER(order by bc.design_code_id) r
+		from
+		b_design_code bc
+		left join sys_org org
+		on org.org_id = bc.design_org_id
+		left join b_materials ms
+		on ms.materials_id = bc.system_code_id
+		left join sys_dictionary dic
+		on dic.dictionary_code = bc.design_state
+		<where>
+			bc.isdel='1'
+			<if test="DesignCondition!=null">
+				<if test="DesignCondition.designId != null and DesignCondition.designId != ''">
+					and bc.design_code_id = #{DesignCondition.designId}
+				</if>
+				<if test="DesignCondition.designOrgId != null and DesignCondition.designOrgId != ''">
+					and bc.design_org_id = #{DesignCondition.designOrgId}
+				</if>
+				<if test="DesignCondition.designCode != null and DesignCondition.designCode != ''">
+					and bc.design_code = #{DesignCondition.designCode}
+				</if>
+				<if test="DesignCondition.designDescribe != null and DesignCondition.designDescribe != ''">
+					and bc.design_describe = #{DesignCondition.designDescribe}
+				</if>
+				<if test="DesignCondition.isMatching != null and DesignCondition.isMatching != ''">
+					and bc.ismatching = #{DesignCondition.isMatching}
+				</if>
+				<if test="DesignCondition.designType != null and DesignCondition.designType != ''">
+					and bc.design_type = #{DesignCondition.designType}
+				</if>
+			</if>
+		</where>
+		)s
+		where 1=1  <if test="DesignCondition.designId == null or DesignCondition.designId == ''">and s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1) </if>
+	</select>
+
+	<!-- 根据条件查询条目数 -->
+	<select id="countByCondition" resultType="int" parameterType="map">
+		select count(*) from b_design_code bc
+		<where>
+			bc.isdel='1'
+			<if test="DesignCondition!=null">
+				<if test="DesignCondition.designId != null and DesignCondition.designId != ''">
+					and bc.design_code_id = #{DesignCondition.designId}
+				</if>
+				<if test="DesignCondition.designOrgId != null and DesignCondition.designOrgId != ''">
+					and bc.design_org_id = #{DesignCondition.designOrgId}
+				</if>
+				<if test="DesignCondition.designCode != null and DesignCondition.designCode != ''">
+					and bc.design_code = #{DesignCondition.designCode}
+				</if>
+				<if test="DesignCondition.designDescribe != null and DesignCondition.designDescribe != ''">
+					and bc.design_describe = #{DesignCondition.designDescribe}
+				</if>
+				<if test="DesignCondition.isMatching != null and DesignCondition.isMatching != ''">
+					and bc.ismatching = #{DesignCondition.isMatching}
+				</if>
+				<if test="DesignCondition.designType != null and DesignCondition.designType != ''">
+					and bc.design_type = #{DesignCondition.designType}
+				</if>
+			</if>
+		</where>
+	</select>
+
+	<!-- 根据ID查询单个实体 -->
+	<select id="selectByPk" resultMap="designMap" parameterType="string">
+		select * from b_design_code where design_code_id = #{designId}
+	</select>
+
+	<!-- 编辑 -->
+	<update id="update" parameterType="Design">
+		update b_design_code
+		<set>
+			design_org_id=#{designOrgId},
+			design_name=#{designName},
+			design_describe=#{designDescribe},
+			design_unit_main=#{designUnitMain},
+			design_unit_secondary=#{designUnitSecondary},
+			design_conversion=#{designConversion},
+			design_type=#{designType},
+			<if test="isMatching!=null and isMatching!=''">ismatching = #{isMatching},</if>
+			<if test="designState!=null and designState!=''">design_state = #{designState},</if>
+			<if test="isdel!=null and isdel!=''">isdel = #{isdel},</if>
+			<if test="systemcodeId!=null and systemcodeId!=''">system_code_id = #{systemcodeId},</if>
+			additional_1=#{additional1},
+			additional_2=#{additional2},
+			additional_3=#{additional3},
+			additional_4=#{additional4}
+		</set>
+		where design_code_id = #{designId}
+	</update>
+	<!-- 批量插入设计院方法 -->
+	<insert id="insertList" parameterType="java.util.List" useGeneratedKeys="false">
+		insert into b_design_code
+		(design_code_id,system_code_id,
+		design_org_id,design_name,
+		design_code,design_describe,
+		design_unit_main,design_unit_secondary,
+		design_conversion,design_type,
+		ismatching,design_state,
+		isdel,additional_1,
+		additional_2,additional_3,additional_4)
+		SELECT A.*
+		FROM(
+		<foreach collection="list" item="item" index="index" separator="UNION ALL">
+			(SELECT
+			#{item.designId} design_code_id,#{item.systemcodeId} system_code_id,
+			#{item.designOrgId} design_org_id,#{item.designName} design_name,
+			#{item.designCode} design_code,#{item.designDescribe} design_describe,
+			#{item.designUnitMain} design_unit_main,#{item.designUnitSecondary} design_unit_secondary,
+			#{item.designConversion} design_conversion,#{item.designType} design_type,
+			#{item.isMatching} ismatching,#{item.designState} design_state,
+			#{item.isdel} isdel,#{item.additional1} additional_1,
+			#{item.additional2} additional_2,#{item.additional3} additional_3,
+			#{item.additional4} additional_4
+			FROM dual)
+		</foreach>
+		)A
+	</insert>
+	<select id="selectByMatching" resultMap="designMap" parameterType="string">
+		select * from b_design_code where ismatching = #{isMatching} and isdel='1'
+	</select>
+	<!-- 校验Code是否重复 -->
+	<select id="checkDesign" parameterType="map" resultMap="designMap">
+		select * from b_design_code se
+		<where>
+			se.design_org_id=#{designOrgId} and se.design_describe=#{designDescribe} and
+			se.design_code=#{designCode} and se.additional_1=#{additional1} and
+			se.additional_2=#{additional2} and se.additional_3=#{additional3} and
+			se.additional_4=#{additional4}
+		</where>
+	</select>
+</mapper>

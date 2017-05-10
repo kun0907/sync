@@ -1,0 +1,15 @@
+database.driverClassName=oracle.jdbc.OracleDriver
+database.url=jdbc\:oracle\:thin\:@192.168.3.148\:1521\:zsh
+database.username=zsh
+database.password=cst123456
+
+
+#database.driverClassName=oracle.jdbc.OracleDriver
+#database.url=jdbc:oracle:thin:@CST-TORA11G6401:1521:test11g
+#database.username=zsh
+#database.password=cst123456
+
+#database.driverClassName=oracle.jdbc.OracleDriver
+#database.url=jdbc\:oracle\:thin\:@127.0.0.1\:1521\:orcl
+#database.username=zsh
+#database.password=zsh

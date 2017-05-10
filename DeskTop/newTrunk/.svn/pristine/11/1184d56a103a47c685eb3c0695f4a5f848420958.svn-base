@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="MaterialInspect">
+    <resultMap id="materialInspectMap" type="MaterialInspect">
+        <id column="materia_inspect_id" property="materiaInspectId"/>
+        <result column="inspect_no" property="inspectNo"/>
+        <result column="materia_Inspect_id" property="materiaInspectId" />
+        <result column="quality_inspect_id" property="qualityInspectId"/>
+        <result column="supplier_name" property="supplierName"  />
+        <result column="inspect_staus" property="inspectStaus" />
+        <result column="create_user_id" property="createUserId"  />
+        <result column="create_user_name" property="createUserName"  />
+        <result column="create_time" property="createTime"  />
+        <result column="inspector" property="inspector"/>
+        <result column="supplier_id" property="supplierId"/>
+        <result column="data_source" property="dataSource"/>
+    </resultMap>
+
+    <!-- 根据条件分页查询条目 -->
+    <select id="selectByCondition" resultMap="materialInspectMap" parameterType="map">
+        select * from(
+        select
+        iq.inspect_no,iq.create_user_name,iq.create_time,
+        iq.supplier_name, sd.dictionary_name as inspect_staus,
+        iq.materia_Inspect_id,iq.supplier_id,
+        ROW_NUMBER() OVER(order by iq.create_time desc) r
+        from
+        I_QUALITY_INSPECT iq
+        left join sys_org org
+        on org.org_id = iq.SUPPLIER_ID
+        left join sys_dictionary sd
+        on sd.dictionary_code = iq.inspect_staus
+        <where>
+            <if test="MaterialInspectCondition!=null">
+                <if test="MaterialInspectCondition.dataSource != null and MaterialInspectCondition.dataSource != ''">
+                    and iq.data_source = #{MaterialInspectCondition.dataSource}
+                </if>
+                <if test="MaterialInspectCondition.inspectNo != null and MaterialInspectCondition.inspectNo != ''">
+                    and iq.inspect_no = #{MaterialInspectCondition.inspectNo}
+                </if>
+                <if test="MaterialInspectCondition.inspectStaus != null and MaterialInspectCondition.inspectStaus != ''">
+                    and iq.inspect_staus = #{MaterialInspectCondition.inspectStaus}
+                </if>
+                <if test="MaterialInspectCondition.supplierName != null and MaterialInspectCondition.supplierName != ''">
+                    and iq.supplier_name = #{MaterialInspectCondition.supplierName}
+                </if>
+                <if test="MaterialInspectCondition.createUserName != null and MaterialInspectCondition.createUserName != ''">
+                    and iq.create_user_name = #{MaterialInspectCondition.createUserName}
+                </if>
+                <!--<if test="MaterialInspectCondition.createTime != null and MaterialInspectCondition.createTime != ''">-->
+                    <!--and iq.create_time = #{MaterialInspectCondition.createTime}-->
+                <!--</if>-->
+                <if test="MaterialInspectCondition.createStartTime != null ">
+                    and iq.create_time &gt;= #{MaterialInspectCondition.createStartTime}
+                </if>
+                <if test="MaterialInspectCondition.createEndTime != null ">
+                    and iq.create_time &lt;= #{MaterialInspectCondition.createEndTime}
+                </if>
+
+            </if>
+        </where>
+        )s
+        where  s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1)
+    </select>
+
+    <!-- 根据条件查询条目数 -->
+    <select id="countByCondition" resultType="int" parameterType="map">
+        select count(*)
+        from
+        I_QUALITY_INSPECT iq
+        left join sys_org org
+        on org.org_id = iq.SUPPLIER_ID
+        left join sys_dictionary sd
+        on sd.dictionary_code = iq.inspect_staus
+        <where>
+            <if test="MaterialInspectCondition!=null">
+                <if test="MaterialInspectCondition.dataSource != null and MaterialInspectCondition.dataSource != ''">
+                    and iq.data_source = #{MaterialInspectCondition.dataSource}
+                </if>
+                <if test="MaterialInspectCondition.inspectNo != null and MaterialInspectCondition.inspectNo != ''">
+                    and iq.inspect_no = #{MaterialInspectCondition.inspectNo}
+                </if>
+                <if test="MaterialInspectCondition.inspectStaus != null and MaterialInspectCondition.inspectStaus != ''">
+                    and iq.inspect_staus = #{MaterialInspectCondition.inspectStaus}
+                </if>
+                <if test="MaterialInspectCondition.supplierName != null and MaterialInspectCondition.supplierName != ''">
+                    and iq.supplier_name = #{MaterialInspectCondition.supplierName}
+                </if>
+                <if test="MaterialInspectCondition.createUserName != null and MaterialInspectCondition.createUserName != ''">
+                    and iq.create_user_name = #{MaterialInspectCondition.createUserName}
+                </if>
+                <!--<if test="MaterialInspectCondition.createTime != null and MaterialInspectCondition.createTime != ''">-->
+                    <!--and iq.create_time = #{MaterialInspectCondition.createTime}-->
+                <!--</if>-->
+                <!--<if test="MaterialInspectCondition.createStartTime != null ">-->
+                    <!--and iq.create_time &gt;= #{MaterialInspectCondition.createStartTime}-->
+                <!--</if>-->
+                <!--<if test="MaterialInspectCondition.createEndTime != null ">-->
+                    <!--and iq.create_time &lt;= #{MaterialInspectCondition.createEndTime}-->
+                <!--</if>-->
+            </if>
+        </where>
+    </select>
+
+    <!-- 插入一个实体 -->
+    <insert id="insert" parameterType="MaterialInspect" useGeneratedKeys="false">
+        insert into  I_QUALITY_INSPECT iq(
+        inspect_no,inspector,supplier_name,create_user_name,create_time,materia_Inspect_id,inspect_staus,quality_inspect_id,supplier_id,data_source
+        ) values(
+        #{inspectNo}, #{inspector}, #{supplierName},#{createUserName}, #{createTime},#{materiaInspectId}
+        ,#{inspectStaus},#{qualityInspectId},#{supplierId},#{dataSource}
+        )
+
+    </insert>
+    <!-- 更新一个实体 -->
+    <update id="update" parameterType="MaterialInspect" >
+        update  I_QUALITY_INSPECT
+        <set>
+            inspector = #{inspector},supplier_name = #{supplierName},inspect_No = #{inspectNo},
+            quality_inspect_id = #{qualityInspectId},
+            <if test="inspectStaus!=null and inspectStaus!=''">inspect_staus = #{inspectStaus},</if>
+        </set>
+        where materia_Inspect_id = #{materiaInspectId}
+    </update>
+
+    <!-- 删除一个实体 -->
+    <delete id="delete" parameterType="string">
+        delete from I_QUALITY_INSPECT
+        <where>
+            materia_Inspect_id = #{materiaInspectId}
+        </where>
+    </delete>
+
+    <!-- 根据ID查询单个实体 -->
+    <select id="selectByPk" resultMap="materialInspectMap" parameterType="string">
+        select * from i_quality_inspect where materia_inspect_id = #{materiaInspectId}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="JiGangTime">
+    <resultMap type="JiGangTime" id="jiGangTimeMap">
+        <id column="id" property="jiGangTimeId"/>
+        <result column="ji_gang_site" property="jiGangSite"/>
+        <result column="ji_gang_time" property="jiGangTime"/>
+    </resultMap>
+
+    <!-- 插入仓库信息 -->
+    <insert id="insert" parameterType="JiGangTime" useGeneratedKeys="false">
+        insert into p_ji_gang_time (
+        ji_gang_site,ji_gang_time
+        ) values (
+        #{jiGangSite},#{jiGangTime,jdbcType=TIMESTAMP}
+        )
+    </insert>
+
+</mapper>

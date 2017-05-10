@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="Delivery" >
+  <resultMap id="deliveryMap" type="Delivery" >
+    <id column="delivery_id" property="deliveryId" jdbcType="VARCHAR" />
+    <result column="delivery_no" property="deliveryNo" jdbcType="VARCHAR" />
+    <result column="delivery_state" property="deliveryState" jdbcType="VARCHAR" />
+    <result column="supplier_name" property="supplierName" jdbcType="VARCHAR" />
+    <result column="supplier_id" property="supplierId" jdbcType="VARCHAR" />
+    <result column="create_user_id" property="createUserId" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="VARCHAR" />
+    <result column="create_user_name" property="createUserName" jdbcType="VARCHAR" />
+    <result column="delivery_date" property="deliveryDate" jdbcType="TIMESTAMP" />
+    <result column="expected_arrival_date" property="expectedArrivalDate"/>
+    <result column="package_num" property="packageNum" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="all">delivery_id,delivery_no,delivery_state,supplier_name,supplier_id,create_user_id,create_time,delivery_date,expected_arrival_date,package_num</sql>
+  <!-- 分页发货单数量 -->
+  <select id="countByCondition" resultType="int" parameterType="map">
+      select count(*)
+      from (
+        select count(1),pd.delivery_no,pd.delivery_id from p_delivery pd
+        left join p_delivery_packing pdp on pdp.delivery_id = pd.delivery_id
+        where pdp.parent_id = '0'
+        group by pd.delivery_no,pd.delivery_id
+      ) s inner join p_delivery pd on s.delivery_id = pd.delivery_id
+      left join sys_org so on pd.supplier_id = so.org_id
+    <where>
+      1=1
+      <if test="DeliveryCondition!=null">
+        <if test="DeliveryCondition.deliveryNo != null and DeliveryCondition.deliveryNo != ''">
+          and pd.delivery_no = #{DeliveryCondition.deliveryNo}
+        </if>
+        <if test="DeliveryCondition.supplierName != null and DeliveryCondition.supplierName != ''">
+          and pd.supplier_name = #{DeliveryCondition.supplierName}
+        </if>
+        <if test="DeliveryCondition.deliveryState != null and DeliveryCondition.deliveryState != ''">
+          and pd.delivery_state = #{DeliveryCondition.deliveryState}
+        </if>
+        <if test="DeliveryCondition.createUserName != null and DeliveryCondition.createUserName != ''">
+          and pd.create_user_name = #{DeliveryCondition.createUserName}
+        </if>
+        <if test="DeliveryCondition.beginTime != null ">
+          and pd.create_time &gt;= #{DeliveryCondition.beginTime}
+        </if>
+        <if test="DeliveryCondition.endTime != null ">
+          and pd.create_time &lt;= #{DeliveryCondition.endTime}
+        </if>
+      </if>
+    </where>
+  </select>
+
+  <!-- 分页查询发货单信息  -->
+  <select id="selectByCondition" resultMap="deliveryMap" parameterType="map">
+    select * from (
+      select pd.delivery_id,pd.delivery_no,pd.delivery_date,pd.supplier_name,pd.expected_arrival_date,pd.delivery_state,main.package_num,
+      pd.create_time,pd.create_user_id,pd.create_user_name,ROW_NUMBER() OVER(order by pd.create_time desc) r
+      from (
+        select count(1) package_num,pd.delivery_no,pd.delivery_id from p_delivery pd
+        left join p_delivery_packing pdp on pdp.delivery_id = pd.delivery_id
+        where pdp.parent_id = '0'
+        group by pd.delivery_no,pd.delivery_id
+      ) main inner join p_delivery pd on main.delivery_id = pd.delivery_id
+      left join sys_org so on pd.supplier_id = so.org_id
+    <where>
+      1=1
+      <if test="DeliveryCondition!=null">
+        <if test="DeliveryCondition.deliveryNo != null and DeliveryCondition.deliveryNo != ''">
+          and pd.delivery_no = #{DeliveryCondition.deliveryNo}
+        </if>
+        <if test="DeliveryCondition.supplierName != null and DeliveryCondition.supplierName != ''">
+          and pd.supplier_name = #{DeliveryCondition.supplierName}
+        </if>
+        <if test="DeliveryCondition.deliveryState != null and DeliveryCondition.deliveryState != ''">
+          and pd.delivery_state = #{DeliveryCondition.deliveryState}
+        </if>
+        <if test="DeliveryCondition.createUserName != null and DeliveryCondition.createUserName != ''">
+          and pd.create_user_name = #{DeliveryCondition.createUserName}
+        </if>
+        <if test="DeliveryCondition.beginTime != null ">
+          and pd.create_time &gt;= #{DeliveryCondition.beginTime}
+        </if>
+        <if test="DeliveryCondition.endTime != null ">
+          and pd.create_time &lt;= #{DeliveryCondition.endTime}
+        </if>
+      </if>
+    </where>
+    ) s where s.r between #{page.startPos} and ((#{page.pageSize}+#{page.startPos})-1)
+  </select>
+
+  <!-- 插入发货单主表信息 -->
+  <insert id="insert" useGeneratedKeys="false">
+    insert into p_delivery (
+    delivery_id,delivery_no,delivery_state,supplier_name,supplier_id,create_user_id,create_time,create_user_name,delivery_date,expected_arrival_date
+    ) values (
+    #{deliveryId},#{deliveryNo},#{deliveryState},#{supplierName},#{supplierId},#{createUserId},#{createTime},#{createUserName},#{deliveryDate},#{expectedArrivalDate}
+    )
+  </insert>
+
+  <update id="update" parameterType="Delivery">
+    <!--
+      WARNING - @mbggenerated
+      This element is automatically generated by MyBatis Generator, do not modify.
+      This element was generated on Sat Feb 25 18:16:17 CST 2017.
+    -->
+    update p_delivery
+    <set>
+      <if test="expectedArrivalDate != null ">expected_arrival_date = #{expectedArrivalDate},</if>
+      <if test="deliveryState != null and deliveryState != ''">delivery_state = #{deliveryState},</if>
+      <if test="deliveryDate != null ">delivery_date = #{deliveryDate},</if>
+      delivery_id = #{deliveryId}
+    </set>
+    where delivery_id = #{deliveryId}
+  </update>
+
+  <!-- 根据主键查询发货单信息 -->
+  <select id="selectByPk" resultMap="deliveryMap" parameterType="string">
+    select * from p_delivery pd
+    <where>
+      pd.delivery_id = #{deliveryId}
+    </where>
+  </select>
+  <!-- 校验Code是否重复 -->
+  <select id="checkStoNo" parameterType="map" resultType="int">
+    select count(*) from p_delivery pd
+    <where>
+      pd.delivery_no=#{stoNo}
+      <if test="stoId!= null and stoId!=''">and pd.delivery_id != #{stoId}</if>
+    </where>
+  </select>
+</mapper>
