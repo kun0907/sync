@@ -1,0 +1,370 @@
+package com.vo;
+
+import java.util.List;
+
+/**
+ * 
+ * @description	以链路为单位，指标统计
+ */
+
+public class FileInfo {
+	
+	private String fileName;	//文件名
+	private String dnsTimeDelayedcount;	//DNS时延(ms)
+	private int tcpCount;	//总链路数(个)
+	private int packetCount;	//传输总包数(个)
+	private double exchangeFlowCount;	//传输总字节(byte)
+	private String exchangeTimeCount;	//交互时间(ms)
+	private String timeEfficiencyAVG;	//平均链路时间有效率(%)
+	private String timeEfficiencyLowest;	//最低链路时间有效率(%)
+	private String lowestEffLink;	//最低链路时间有效率IP+port
+	
+	private int sumOftenOffVerdict;	//频繁拆建链次数
+	
+	private String dnsBigIp;	//最大DNS时延 ip		（低效）
+//	private String dnsBigPort;	//最大DNS时延 port	（低效）
+	
+	private String offTimeBigIp;	//最大断链时延 ip		（低效）
+	private long offTimeBigPort;	//最大断链时延  port	（低效）
+	
+	private String timeToFirstBigIp;	//最大建链后首包时延 ip		（低效）
+	private long timeToFirstBigPort;	//最大建链后首包时延  port	（低效）
+	
+	private String tcpTimeBigIp;	//最大TCP建链时延 ip		（低效）
+	private String tcpTimeBigPort;	//最大TCP建链时延  port	（低效）
+	
+	private String rttTimeBigIp;	//最大平均RTT时间 ip		（低效）
+	private String rttTimeBigPort;	//最大平均RTT时间  port	（低效）
+	
+	private List<ServiceIP> serviceIP;	// Server IP
+	private String allKeepTimes; //总持续时间
+	private String allFileDataTimes; //总数据传输时间
+	private String maxFlowIP;//传输量最大IP及端口
+	private String maxFlowPort;	//传输量最大IP及端口
+	private String maxTCPip;	//链路最多IP
+	
+	private String avgT1;	// Time to First Send平均值
+	private String avgT2;	// Time to First Response平均值
+	
+	private String avgDnsDelsyTs="N/A";	// log平均DNS时延(ms)
+	private String avgTcpTimeDelayed="N/A";	//log平均TCP建链时延(ms)
+	private String avgTimeToFirstByte="N/A";	//log平均建链后首包时延(ms)
+	private String avgOffTimeDelayed="N/A";	//log平均断链时延(ms)
+	private String avgRttTime;	//log平均RTT时间(ms)   平均报文请求响应时间
+	private String avgExchangeTime;	//log平均交互时间(ms)
+	
+	private String proviceIpFlag="1";	//跨域判断状态   0已判断、1未判断
+	private String proviceIpaddrNum;	//跨域个数
+	private String proviceIpAddr;	//IP跨域地址
+	//  临时静态值，将来需要获取
+//	private double avgAqyT1 = 0.73;
+//	private double avgAqyT2 = 60.53;
+//	private double avgTxT1 = 1.44;
+//	private double avgTxT2 = 51.27;
+//	private double avgMgT1 = 3.34;
+//	private double avgMgT2 = 109.29;
+
+	//当前和基本参数比较  计算结果   （0、耗时多于，1、耗时低于，2、耗时相似于）
+//	private String avgAqyT1Rs;
+//	private String avgTxT1Rs;
+//	private String avgAqyT2Rs;
+//	private String avgTxT2Rs;
+
+	private String downloadRate;	//服务器是否支持TCP相关参数配置
+	private int ipTCPCounts;	//链路最多IP(链路数)
+	private List<RebuildInfo> rebuildInfo;	// 频繁拆建链相关信息
+//	private GrathVO grath;	
+	private List<String> others;
+	/*
+	 * 结论相关参数
+     */
+	private int ipCount;//有效ip个数
+	private int othersIpCount;//无效ip个数
+	private int othersTcpCount;//无效链路个数
+	private int permissableParameterCount;//可计算参数个数
+	private String noPermissablePara;//不可计算参数
+	
+	public String getNoPermissablePara() {
+		return noPermissablePara;
+	}
+	public void setNoPermissablePara(String noPermissablePara) {
+		this.noPermissablePara = noPermissablePara;
+	}
+	public int getIpCount() {
+		return ipCount;
+	}
+	public void setIpCount(int ipCount) {
+		this.ipCount = ipCount;
+	}
+	public int getOthersIpCount() {
+		return othersIpCount;
+	}
+	public void setOthersIpCount(int othersIpCount) {
+		this.othersIpCount = othersIpCount;
+	}
+	public int getOthersTcpCount() {
+		return othersTcpCount;
+	}
+	public void setOthersTcpCount(int othersTcpCount) {
+		this.othersTcpCount = othersTcpCount;
+	}
+	public int getPermissableParameterCount() {
+		return permissableParameterCount;
+	}
+	public void setPermissableParameterCount(int permissableParameterCount) {
+		this.permissableParameterCount = permissableParameterCount;
+	}
+	
+	public List<String> getOthers() {
+		return others;
+	}
+	public void setOthers(List<String> others) {
+		this.others = others;
+	}
+	public int getIpTCPCounts() {
+		return ipTCPCounts;
+	}
+	public void setIpTCPCounts(int ipTCPCounts) {
+		this.ipTCPCounts = ipTCPCounts;
+	}
+	public String getMaxFlowIP() {
+		return maxFlowIP;
+	}
+	public void setMaxFlowIP(String maxFlowIP) {
+		this.maxFlowIP = maxFlowIP;
+	}
+	public String getMaxFlowPort() {
+		return maxFlowPort;
+	}
+	public void setMaxFlowPort(String maxFlowPort) {
+		this.maxFlowPort = maxFlowPort;
+	}
+	public String getMaxTCPip() {
+		return maxTCPip;
+	}
+	public void setMaxTCPip(String maxTCPip) {
+		this.maxTCPip = maxTCPip;
+	}
+	public String getAllKeepTimes() {
+		return allKeepTimes;
+	}
+	public void setAllKeepTimes(String allKeepTimes) {
+		this.allKeepTimes = allKeepTimes;
+	}
+	public String getAllFileDataTimes() {
+		return allFileDataTimes;
+	}
+	public void setAllFileDataTimes(String allFileDataTimes) {
+		this.allFileDataTimes = allFileDataTimes;
+	}
+	public String getDnsTimeDelayedcount() {
+		return dnsTimeDelayedcount;
+	}
+	public void setDnsTimeDelayedcount(String dnsTimeDelayedcount) {
+		this.dnsTimeDelayedcount = dnsTimeDelayedcount;
+	}
+	public int getTcpCount() {
+		return tcpCount;
+	}
+	public void setTcpCount(int tcpCount) {
+		this.tcpCount = tcpCount;
+	}
+	public int getPacketCount() {
+		return packetCount;
+	}
+	public void setPacketCount(int packetCount) {
+		this.packetCount = packetCount;
+	}
+	public double getExchangeFlowCount() {
+		return exchangeFlowCount;
+	}
+	public void setExchangeFlowCount(double exchangeFlowCount) {
+		this.exchangeFlowCount = exchangeFlowCount;
+	}
+	public String getExchangeTimeCount() {
+		return exchangeTimeCount;
+	}
+	public void setExchangeTimeCount(String exchangeTimeCount) {
+		this.exchangeTimeCount = exchangeTimeCount;
+	}
+	public String getTimeEfficiencyAVG() {
+		return timeEfficiencyAVG;
+	}
+	public void setTimeEfficiencyAVG(String timeEfficiencyAVG) {
+		this.timeEfficiencyAVG = timeEfficiencyAVG;
+	}
+	public List<ServiceIP> getServiceIP() {
+		return serviceIP;
+	}
+	public void setServiceIP(List<ServiceIP> serviceIP) {
+		this.serviceIP = serviceIP;
+	}
+	public String getFileName() {
+		return fileName;
+	}
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+	public List<RebuildInfo> getRebuildInfo() {
+		return rebuildInfo;
+	}
+	public void setRebuildInfo(List<RebuildInfo> rebuildInfos) {
+		this.rebuildInfo = rebuildInfos;
+	}
+	public void setDownloadRate(String downloadRate) {
+		this.downloadRate = downloadRate;
+	}
+	public String getDownloadRate() {
+		return downloadRate;
+	}
+	public String getavgT1() {
+		return avgT1;
+	}
+	public void setavgT1(String avgT1) {
+		this.avgT1 = avgT1;
+	}
+	public String getavgT2() {
+		return avgT2;
+	}
+	public void setavgT2(String avgT2) {
+		this.avgT2 = avgT2;
+	}
+	public String getAvgT1() {
+		return avgT1;
+	}
+	public void setAvgT1(String avgT1) {
+		this.avgT1 = avgT1;
+	}
+	public String getAvgT2() {
+		return avgT2;
+	}
+	public void setAvgT2(String avgT2) {
+		this.avgT2 = avgT2;
+	}
+	public String getAvgDnsDelsyTs() {
+		return avgDnsDelsyTs;
+	}
+	public void setAvgDnsDelsyTs(String avgDnsDelsyTs) {
+		this.avgDnsDelsyTs = avgDnsDelsyTs;
+	}
+	public String getAvgTcpTimeDelayed() {
+		return avgTcpTimeDelayed;
+	}
+	public void setAvgTcpTimeDelayed(String avgTcpTimeDelayed) {
+		this.avgTcpTimeDelayed = avgTcpTimeDelayed;
+	}
+	public String getAvgTimeToFirstByte() {
+		return avgTimeToFirstByte;
+	}
+	public void setAvgTimeToFirstByte(String avgTimeToFirstByte) {
+		this.avgTimeToFirstByte = avgTimeToFirstByte;
+	}
+	public String getAvgOffTimeDelayed() {
+		return avgOffTimeDelayed;
+	}
+	public void setAvgOffTimeDelayed(String avgOffTimeDelayed) {
+		this.avgOffTimeDelayed = avgOffTimeDelayed;
+	}
+	public String getAvgRttTime() {
+		return avgRttTime;
+	}
+	public void setAvgRttTime(String avgRttTime) {
+		this.avgRttTime = avgRttTime;
+	}
+	public String getAvgExchangeTime() {
+		return avgExchangeTime;
+	}
+	public void setAvgExchangeTime(String avgExchangeTime) {
+		this.avgExchangeTime = avgExchangeTime;
+	}
+	public String getTimeEfficiencyLowest() {
+		return timeEfficiencyLowest;
+	}
+	public void setTimeEfficiencyLowest(String timeEfficiencyLowest) {
+		this.timeEfficiencyLowest = timeEfficiencyLowest;
+	}
+	public String getLowestEffLink() {
+		return lowestEffLink;
+	}
+	public void setLowestEffLink(String lowestEffLink) {
+		this.lowestEffLink = lowestEffLink;
+	}
+	public String getDnsBigIp() {
+		return dnsBigIp;
+	}
+	public void setDnsBigIp(String dnsBigIp) {
+		this.dnsBigIp = dnsBigIp;
+	}
+	public String getOffTimeBigIp() {
+		return offTimeBigIp;
+	}
+	public void setOffTimeBigIp(String offTimeBigIp) {
+		this.offTimeBigIp = offTimeBigIp;
+	}
+	public long getOffTimeBigPort() {
+		return offTimeBigPort;
+	}
+	public void setOffTimeBigPort(long offTimeBigPort2) {
+		this.offTimeBigPort = offTimeBigPort2;
+	}
+	public String getTimeToFirstBigIp() {
+		return timeToFirstBigIp;
+	}
+	public void setTimeToFirstBigIp(String timeToFirstBigIp) {
+		this.timeToFirstBigIp = timeToFirstBigIp;
+	}
+	public long getTimeToFirstBigPort() {
+		return timeToFirstBigPort;
+	}
+	public void setTimeToFirstBigPort(long timeToFirstBigPort2) {
+		this.timeToFirstBigPort = timeToFirstBigPort2;
+	}
+	public String getTcpTimeBigIp() {
+		return tcpTimeBigIp;
+	}
+	public void setTcpTimeBigIp(String tcpTimeBigIp) {
+		this.tcpTimeBigIp = tcpTimeBigIp;
+	}
+	public String getTcpTimeBigPort() {
+		return tcpTimeBigPort;
+	}
+	public void setTcpTimeBigPort(String tcpTimeBigPort) {
+		this.tcpTimeBigPort = tcpTimeBigPort;
+	}
+	public String getRttTimeBigIp() {
+		return rttTimeBigIp;
+	}
+	public void setRttTimeBigIp(String rttTimeBigIp) {
+		this.rttTimeBigIp = rttTimeBigIp;
+	}
+	public String getRttTimeBigPort() {
+		return rttTimeBigPort;
+	}
+	public void setRttTimeBigPort(String string) {
+		this.rttTimeBigPort = string;
+	}
+	public int getSumOftenOffVerdict() {
+		return sumOftenOffVerdict;
+	}
+	public void setSumOftenOffVerdict(int sumOftenOffVerdict2) {
+		this.sumOftenOffVerdict = sumOftenOffVerdict2;
+	}
+	public String getProviceIpFlag() {
+		return proviceIpFlag;
+	}
+	public void setProviceIpFlag(String proviceIpFlag) {
+		this.proviceIpFlag = proviceIpFlag;
+	}
+	public String getProviceIpaddrNum() {
+		return proviceIpaddrNum;
+	}
+	public void setProviceIpaddrNum(String proviceIpaddrNum) {
+		this.proviceIpaddrNum = proviceIpaddrNum;
+	}
+	public String getProviceIpAddr() {
+		return proviceIpAddr;
+	}
+	public void setProviceIpAddr(String proviceIpAddr) {
+		this.proviceIpAddr = proviceIpAddr;
+	}
+}

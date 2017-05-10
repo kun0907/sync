@@ -1,0 +1,152 @@
+package com.vo;
+
+import java.util.List;
+
+/**
+ * Created by xuzhankun on 2017/4/9.
+ */
+public class ContrastConclusion {
+    private String title;
+    private String lowestEffLink;
+    private String effLinkTitle;
+    private String exchangeTimeTitle;
+    private String exchangeTimeSecondTitle;
+    private String avgDnsDelsyTs;
+    private String tcpTimeDelayed;
+    private String dnsBigIp;
+    private String timeToFirst;
+    private String offTime;
+    private String rttTime;
+    private String tcpCount;
+    private String packetLenData;
+
+    List<List<String>> table1;
+    List<List<String>> table2;
+    public List<List<String>> getTable1() {
+        return table1;
+    }
+    public void setTable1(List<List<String>> table1) {
+        this.table1 = table1;
+    }
+    public List<List<String>> getTable2() {
+        return table2;
+    }
+    public void setTable2(List<List<String>> table2) {
+        this.table2 = table2;
+    }
+    public List<List<String>> getTable3() {
+        return table3;
+    }
+    public void setTable3(List<List<String>> table3) {
+        this.table3 = table3;
+    }
+    List<List<String>> table3;
+
+
+    public String getPacketLenData() {
+        return packetLenData;
+    }
+    public void setPacketLenData(String packetLenData) {
+        this.packetLenData = packetLenData;
+    }
+    public String getTcpCount() {
+        return tcpCount;
+    }
+    public void setTcpCount(String tcpCount) {
+        this.tcpCount = tcpCount;
+    }
+    public String getOffTime() {
+        return offTime;
+    }
+    public void setOffTime(String offTime) {
+        this.offTime = offTime;
+    }
+    public String getRttTime() {
+        return rttTime;
+    }
+    public void setRttTime(String rttTime) {
+        this.rttTime = rttTime;
+    }
+    public String getTimeToFirst() {
+        return timeToFirst;
+    }
+    public void setTimeToFirst(String timeToFirst) {
+        this.timeToFirst = timeToFirst;
+    }
+    public String getDnsBigIp() {
+        return dnsBigIp;
+    }
+    public void setDnsBigIp(String dnsBigIp) {
+        this.dnsBigIp = dnsBigIp;
+    }
+    public String getTcpTimeDelayed() {
+        return tcpTimeDelayed;
+    }
+    public void setTcpTimeDelayed(String tcpTimeDelayed) {
+        this.tcpTimeDelayed = tcpTimeDelayed;
+    }
+    private String avgTimeToFirstByte;
+    private String avgOffTimeDelayed;
+    private String avgRttTime;
+    private String avgExchangeTime;
+
+
+    public String getExchangeTimeTitle() {
+        return exchangeTimeTitle;
+    }
+    public void setExchangeTimeTitle(String exchangeTimeTitle) {
+        this.exchangeTimeTitle = exchangeTimeTitle;
+    }
+    public String getExchangeTimeSecondTitle() {
+        return exchangeTimeSecondTitle;
+    }
+    public void setExchangeTimeSecondTitle(String exchangeTimeSecondTitle) {
+        this.exchangeTimeSecondTitle = exchangeTimeSecondTitle;
+    }
+    public String getAvgDnsDelsyTs() {
+        return avgDnsDelsyTs;
+    }
+    public void setAvgDnsDelsyTs(String avgDnsDelsyTs) {
+        this.avgDnsDelsyTs = avgDnsDelsyTs;
+    }
+    public String getAvgTimeToFirstByte() {
+        return avgTimeToFirstByte;
+    }
+    public void setAvgTimeToFirstByte(String avgTimeToFirstByte) {
+        this.avgTimeToFirstByte = avgTimeToFirstByte;
+    }
+    public String getAvgOffTimeDelayed() {
+        return avgOffTimeDelayed;
+    }
+    public void setAvgOffTimeDelayed(String avgOffTimeDelayed) {
+        this.avgOffTimeDelayed = avgOffTimeDelayed;
+    }
+    public String getAvgRttTime() {
+        return avgRttTime;
+    }
+    public void setAvgRttTime(String avgRttTime) {
+        this.avgRttTime = avgRttTime;
+    }
+    public String getAvgExchangeTime() {
+        return avgExchangeTime;
+    }
+    public void setAvgExchangeTime(String avgExchangeTime) {
+        this.avgExchangeTime = avgExchangeTime;
+    }
+    public String getLowestEffLink() {
+        return lowestEffLink;
+    }
+    public void setLowestEffLink(String lowestEffLink) {
+        this.lowestEffLink = lowestEffLink;
+    }public String getEffLinkTitle() {
+        return effLinkTitle;
+    }
+    public void setEffLinkTitle(String effLinkTitle) {
+        this.effLinkTitle = effLinkTitle;
+    }public String getTitle() {
+        return title;
+    }
+    public void setTitle(String title) {
+        this.title = title;
+    }
+}

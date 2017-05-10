@@ -1,0 +1,51 @@
+package com.vo;
+
+
+public class SysInfo {
+	
+	private String userName;
+	private String startTime;
+	private String businessType;
+	private String version;
+	private String terminalBrand;
+	private String terminalModel;
+	
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public String getStartTime() {
+		return startTime;
+	}
+	public void setStartTime(String startTime) {
+		this.startTime = startTime;
+	}
+	public String getBusinessType() {
+		return businessType;
+	}
+	public void setBusinessType(String businessType) {
+		this.businessType = businessType;
+	}
+	public String getVersion() {
+		return version;
+	}
+	public void setVersion(String version) {
+		this.version = version;
+	}
+	public String getTerminalBrand() {
+		return terminalBrand;
+	}
+	public void setTerminalBrand(String terminalBrand) {
+		this.terminalBrand = terminalBrand;
+	}
+	public String getTerminalModel() {
+		return terminalModel;
+	}
+	public void setTerminalModel(String terminalModel) {
+		this.terminalModel = terminalModel;
+	}
+	
+	
+}

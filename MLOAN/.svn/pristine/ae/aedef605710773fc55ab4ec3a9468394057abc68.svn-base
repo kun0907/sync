@@ -1,0 +1,305 @@
+package com.controller;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.constant.RedisStorageConfig;
+import com.constant.SysInfoConfig;
+import com.service.IGraphDateService;
+import com.service.IIpAddService;
+import com.service.ILogsAnalyzeService;
+import com.service.indexDataServiceImpl;
+import com.util.StringUtil;
+import com.util.base.ActionBase;
+import com.util.base.LogThreads;
+import com.vo.FileInfo;
+import com.vo.SysInfo;
+import net.sf.json.JSONArray;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import redis.clients.jedis.ShardedJedis;
+import redis.clients.jedis.ShardedJedisPool;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+@Controller
+@Scope("prototype")
+@RequestMapping("reportOut")
+public class AnalyzeController extends ActionBase {
+	
+	@Autowired
+	IGraphDateService service;
+	@Autowired
+	ILogsAnalyzeService logsAnalyzeService;
+	@Autowired
+	IIpAddService ipAddService;
+	@Autowired
+	private ShardedJedisPool shardedJedisPool; 
+	
+	
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value="/oneKey.do",method=RequestMethod.POST)
+	public void norm(HttpServletRequest request,HttpServletResponse response) throws Exception {
+		
+		log.info("报告输出........");
+		
+		if(!effecTive(request, response)) {
+			return;
+		}
+		
+		HttpSession session = request.getSession();
+		String userName = (String)session.getAttribute("username");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String startTime = sdf.format(new Date());
+		LogThreads.username = userName;
+		ShardedJedis jedis = shardedJedisPool.getResource();
+		
+		String[] filechecks = request.getParameter("filecheck").split(",");//已选中文件
+		List<String>  list = new ArrayList<String>();
+		int fiSi = filechecks.length;
+		while (fiSi>0) {
+			fiSi--;
+			list.add(filechecks[fiSi].replace(".pcap", ""));
+		}
+		String[] filecheck = list.toArray(new String[list.size()]); 
+		session.setAttribute("filecheck", filecheck);
+		
+		List<String> redisNoFile = new ArrayList<String>();//redis中没有的文件
+		String[] fileName = new String[filecheck.length];
+		String normData = request.getParameter("norm");
+
+		
+		String redisFileTcpGraph = "";//redis中图形数据
+		String redisFileFileInfo = "";//redis中详细数据
+		//循环选中文件 filecheck, 判断redis是否已有文件数据, 选出redis中没有的文件数据进行解析
+		log.info("全部选中文件-------" + JSONArray.fromObject(filecheck));
+		for(int i=0; i<filecheck.length; i++) {
+			redisFileFileInfo = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.FILE_INFO);
+			redisFileTcpGraph = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.TCP_GRAPH);
+			//判断从jedis中取出的数据是否为空, 如果为空则需要解析
+			if (StringUtil.isEmpty(redisFileFileInfo) && StringUtil.isEmpty(redisFileTcpGraph)) {
+				redisNoFile.add(filecheck[i]);
+			}
+			fileName[i] = filecheck[i].substring(filecheck[i].indexOf("@") + 1);
+		}
+		
+		if (redisNoFile != null && redisNoFile.size() > 0) {
+			//解析redis中没有的文件, 并存入redis中
+			log.info("redis中没有的文件-------" + JSONArray.fromObject(redisNoFile));
+			logsAnalyzeService.logAscription(normData,redisNoFile, service);
+		} 
+		
+		Map<String, Object> list_maps = new HashMap<String, Object>();
+		Map<String, Object> redisResultGraphMap = new HashMap<String, Object>();
+		FileInfo fileInfo;
+		List<FileInfo> fileInfos = new ArrayList<FileInfo>();
+		//再次遍历所有选中文件, 从redis中将数据取出
+		for(int i=0; i<filecheck.length; i++) {
+			redisFileFileInfo = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.FILE_INFO);
+			redisFileTcpGraph = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.TCP_GRAPH);
+			redisResultGraphMap = JSONObject.parseObject(redisFileTcpGraph, Map.class);
+			list_maps.putAll(redisResultGraphMap);
+			fileInfo = JSONObject.parseObject(redisFileFileInfo, FileInfo.class);
+			String proviceIpflag = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.CROSS_PROVICE_IPFLAG);
+			if(proviceIpflag != null && proviceIpflag.equals("0")){
+				
+				fileInfo.setProviceIpAddr(jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.CROSS_PROVICE_IPADDR));
+				fileInfo.setProviceIpaddrNum(jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.CROSS_PROVICE_IPADDRNUM));
+				fileInfo.setProviceIpFlag("0");
+
+			}
+			fileInfos.add(fileInfo);
+		}
+		       
+		//系统信息
+		SysInfo sysInfo = new SysInfo();
+		sysInfo.setBusinessType(SysInfoConfig.BUSINESS_TYPE_01);
+		sysInfo.setUserName(userName);
+		sysInfo.setVersion(SysInfoConfig.VERSION);
+//		sysInfo.setTerminalBrand(""); 
+//		sysInfo.setTerminalModel("");	
+		sysInfo.setStartTime(startTime);
+		
+		//文件解析结果
+		Map<String, Object> data_map = new HashMap<String, Object>();
+		list_maps.put("filecheck", fileName);
+		indexDataServiceImpl ids = new indexDataServiceImpl();
+		data_map.put("norm_graph", ids.norm_graph(list_maps));       //  图形展示
+		data_map.put("filecheck", JSONObject.toJSONString(filecheck));       //  文件名称列表
+		data_map.put("sysInfo", sysInfo);         
+		
+//		data_map.put("fileInfos", infos.get("fileInfos"));  
+		data_map.put("fileInfos", fileInfos);  
+		
+		log.info("后台继续查询   IP 归属........");
+//		List<String> ipAddrIds = (List<String>) infos.get("ipAddrIds");
+		List<String> redisFileSerIP;
+		
+		String ipState;
+		//从redis中取出redis中没有ip归属地的ip,进行ip归属地查询
+		for(int i=0; i<redisNoFile.size(); i++) {
+			ipState = jedis.get(userName + "_" + redisNoFile.get(i) + RedisStorageConfig.IP_ADDRESS_ASCRIPTION_STATE);
+			if(ipState==null || ipState.equals("1")){
+				redisFileSerIP = jedis.lrange(userName + "_" + redisNoFile.get(i) + RedisStorageConfig.IP_ADDRESS, 0, -1);
+				ipAddService.ipAscription(redisFileSerIP, redisNoFile.get(i), userName);
+			}
+		}
+		ipVerify(jedis, filecheck, userName);
+		log.info("后台查询   IP 归属 完毕........");
+		renderData(request, response, JSON.toJSONString(data_map));
+		log.info("分析结果数据以返回值前端........");
+	}
+	
+	@RequestMapping(value="/ipAddr.do",method=RequestMethod.GET)
+	public void ipAddr(HttpServletRequest request,HttpServletResponse response) throws Exception {
+		log.info("IP 归属........");
+		
+		HttpSession session = request.getSession();
+		String[] filecheck = (String[]) session.getAttribute("filecheck");
+		String userName = (String)session.getAttribute("username");
+		
+		if(!effecTive(request, response)) {
+			return;
+		}
+		
+		ShardedJedis jedis = null;
+		jedis = shardedJedisPool.getResource();
+		
+		Map<String, String> map = ipVerify(jedis,filecheck,userName);
+		
+		if(map != null && map.size() > 1) {
+			renderData(request, response, JSON.toJSONString(map));
+			return;
+		} else {
+			log.error("ip地址查询出错***************");
+		}
+	}
+	/**
+	 * IP归属地查证
+	 * @param jedis 
+	 * @param filecheck 
+	 * @param userName 
+	 * @return 
+	 */
+	@SuppressWarnings("unchecked")
+	private Map<String, String> ipVerify(ShardedJedis jedis, String[] filecheck, String userName) {
+		
+		log.info("IP归属地查证........");
+		String fileIpAddr = null;
+		String ipState;
+		List<String> redisFileSerIP;
+		Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map0 = new HashMap<String, String>();
+		
+		String fileName = null;
+		//从redis中取出redis中没有ip归属地的ip,进行ip归属地查询
+		for(int i=0; i<filecheck.length; i++) {
+			
+			fileName = filecheck[i].split("@")[1];
+			ipState = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.IP_ADDRESS_ASCRIPTION_STATE);
+			if(ipState==null || ipState.equals("1")){
+				redisFileSerIP = jedis.lrange(userName + "_" + filecheck[i] + RedisStorageConfig.IP_ADDRESS, 0, -1);
+				try {
+					ipAddService.ipAscription(redisFileSerIP, filecheck[i], userName);
+				} catch (Exception e) {
+					e.printStackTrace();
+					log.error("IP归属地查询异常------------------------\n"+e);
+				}
+				//取出相应 IP 以及归属地
+				fileIpAddr = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.IP_ADDRESS_ASCRIPTION);
+				map0 = JSONObject.parseObject(fileIpAddr, Map.class);
+				if(fileIpAddr != null){
+					
+					map.putAll(map0);
+					map.putAll(crossProvice(jedis, map0,fileName,userName));
+				}
+				
+			}else{
+				fileIpAddr = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.IP_ADDRESS_ASCRIPTION);
+				map0 = JSONObject.parseObject(fileIpAddr, Map.class);
+				if(fileIpAddr != null)
+					map.putAll(map0);
+				String ipflag = jedis.get(userName + "_" + fileName + RedisStorageConfig.CROSS_PROVICE_IPFLAG);
+				if(ipflag==null || ipflag.equals("1")){
+					map.putAll(crossProvice(jedis, map0,fileName,userName));
+				}else{
+					map.put(fileName, jedis.get(userName + "_" + fileName + RedisStorageConfig.CROSS_PROVICE_IPADDR));
+				}
+			}
+		}
+		log.info("IP归属地查证结结束--------------------");
+		return map;
+	}
+	/**
+	 * 归属地跨区
+	 * @param userName 
+	 * @param filecheck 
+	 * @return 
+	 */
+	private Map<String, String> crossProvice(ShardedJedis jedis, Map<String, String> map, String fileName, String userName) {
+
+		log.info("归属地跨区........   userName    "+userName+"     fileName    "+fileName);
+		StringBuffer ipAddr = new StringBuffer();
+		for (String key : map.keySet()) {
+			ipAddr.append(map.get(key));
+			ipAddr.append("@");
+		}
+		String[] ipaddrs = ipAddr.toString().split("@");
+		int proviceCount = 1;
+		String allProvice = "";
+		String provice = "";
+		String addr;
+		for(int i=1; i<ipaddrs.length; i++) {
+			addr = ipaddrs[i];
+			if (addr != null && !"".equals(addr) && !allProvice.contains(addr.substring(0,2))) {
+				proviceCount++;
+				if (addr.contains("/")) {
+					addr = addr.substring(0,addr.indexOf("/"));
+				}
+				if (addr.contains("国")) {
+					provice = addr.substring(0,(addr.indexOf("国") + 1));//main测试---------
+					allProvice = allProvice + provice + "、";
+					continue;
+				} else if (addr.contains("省")) {
+					provice = addr.substring(0,(addr.indexOf("省") + 1));//main测试---------
+					allProvice = allProvice + provice + "、";
+					continue;
+				} else if (addr.contains("市")) {
+					provice = addr.substring(0,(addr.indexOf("市") + 1));//main测试---------
+					allProvice = allProvice + provice + "、";
+					continue;
+				} else {
+					provice = addr;
+					allProvice = allProvice + provice + "、";
+				}
+			}
+		} 
+		if (proviceCount > 1) {
+			allProvice = allProvice.substring(0, allProvice.length()-1);
+		} else {
+			proviceCount = 0;
+			allProvice = "";
+		}
+		jedis.set(userName + "_" + fileName + RedisStorageConfig.CROSS_PROVICE_IPADDRNUM, String.valueOf(proviceCount));
+		jedis.set(userName + "_" + fileName + RedisStorageConfig.CROSS_PROVICE_IPADDR, allProvice);
+		jedis.set(userName + "_" + fileName + RedisStorageConfig.CROSS_PROVICE_IPFLAG, "0");
+		
+		map.put(fileName+"Num", String.valueOf(proviceCount));
+		map.put(fileName, allProvice);
+		log.info("归属地跨区判断结束----------   userName    "+userName+"     fileName    "+fileName);
+		return map;
+	}
+
+}
+
+
+
+
+
+

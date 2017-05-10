@@ -1,0 +1,59 @@
+package com.vo;
+
+import java.util.List;
+
+public class GrathVO {
+	
+	private List<String> mapIpFlowX;// IP流量图x轴
+	private List<Integer> mapIpFlowY;//IP流量图x轴
+	
+	private int packetLenMin;//包长范围最小值
+	private int packetLenMax;//包长范围最大值
+	private List<Integer> packetSize;//包长在范围内的包个数
+	private List<String> packetLenScope;//包长的范围
+	private List<String> packetSizeScale;
+	
+	
+	public int getPacketLenMin() {
+		return packetLenMin;
+	}
+	public void setPacketLenMin(int packetLenMin) {
+		this.packetLenMin = packetLenMin;
+	}
+	public int getPacketLenMax() {
+		return packetLenMax;
+	}
+	public void setPacketLenMax(int packetLenMax) {
+		this.packetLenMax = packetLenMax;
+	}
+	public List<Integer> getPacketSize() {
+		return packetSize;
+	}
+	public void setPacketSize(List<Integer> packetSize) {
+		this.packetSize = packetSize;
+	}
+	public List<String> getPacketLenScope() {
+		return packetLenScope;
+	}
+	public void setPacketLenScope(List<String> packetLenScope) {
+		this.packetLenScope = packetLenScope;
+	}
+	public List<String> getPacketSizeScale() {
+		return packetSizeScale;
+	}
+	public void setPacketSizeScale(List<String> packetSizeScale) {
+		this.packetSizeScale = packetSizeScale;
+	}
+	public List<String> getMapIpFlowX() {
+		return mapIpFlowX;
+	}
+	public void setMapIpFlowX(List<String> mapIpFlowX) {
+		this.mapIpFlowX = mapIpFlowX;
+	}
+	public List<Integer> getMapIpFlowY() {
+		return mapIpFlowY;
+	}
+	public void setMapIpFlowY(List<Integer> mapIpFlowY) {
+		this.mapIpFlowY = mapIpFlowY;
+	}
+}

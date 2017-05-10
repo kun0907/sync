@@ -1,0 +1,38 @@
+package com.vo;
+
+import java.util.List;
+
+public class ServiceIP {
+	
+	private String DNStimeDelayed;
+	private String attribution;
+	private String serviceIP;
+	private List<ServiceIPInfo> serviceIPInfo;
+	
+	
+	public String getDNStimeDelayed() {
+		return DNStimeDelayed;
+	}
+	public void setDNStimeDelayed(String dNStimeDelayed) {
+		DNStimeDelayed = dNStimeDelayed;
+	}
+	public String getAttribution() {
+		return attribution;
+	}
+	public void setAttribution(String attribution) {
+		this.attribution = attribution;
+	}
+	public String getServiceIP() {
+		return serviceIP;
+	}
+	public void setServiceIP(String serviceIP) {
+		this.serviceIP = serviceIP;
+	}
+	public List<ServiceIPInfo> getServiceIPInfo() {
+		return serviceIPInfo;
+	}
+	public void setServiceIPInfo(List<ServiceIPInfo> serviceIPInfo) {
+		this.serviceIPInfo = serviceIPInfo;
+	}
+	
+}

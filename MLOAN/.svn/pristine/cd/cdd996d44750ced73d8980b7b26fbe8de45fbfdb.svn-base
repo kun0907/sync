@@ -1,0 +1,1008 @@
+<!DOCTYPE html [
+<!ENTITY nbsp " "> 
+]>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Insert title here</title>
+<style type="text/css">
+	body {
+		 font-family: Arial Unicode MS;
+	/* 	font-family: SimHei; */
+	 	/* font-family: YouYuan;  */
+	 	/* font-family: "宋体"; */
+	}
+	
+	#table_test{
+			width: 1300px;
+			table-layout:fixed;
+	}
+		
+	#table_test tr td{
+			word-break:break-all;
+	}
+	
+	
+	 @page{
+		 	size: 1350px 800px;
+			padding-top: 50px;
+			padding-bottom: 50px;
+			padding-left:0px;
+			padding-right:0px;
+			background-image: url("yemei.png");
+			background-position: 50px 50px;
+			background-repeat: no-repeat;
+	} 
+	
+	
+	.tr_title{
+		background: #a1dbf6;
+		text-align: center;
+		height: 24px;
+	}
+	
+	.tr_data{
+		height: 22px;
+	}
+
+li{
+	list-style:none;
+	display:black;
+}
+a{
+	color:balck;
+}
+
+/*报文信息*/
+#information{
+	margin-bottom:10px;
+	padding:5px;
+	width:1450px;
+	background-color:gainsboro;
+	overflow:  hidden;
+	
+}
+/*报文信息*/
+.bw{margin-bottom:30px;background-color:white;-webkit-border-radius:8px;-moz-border-radius:8px;border-radius:8px;padding:10px;}
+.bw .bw_title{
+	font-size:22px;
+}
+.bw .xian{
+	border: 1px solid  black;
+}
+/*基础信息*/
+.bw_body .base{
+	padding-left:20px;
+	box-sizing: border-box;
+}
+.bw_body .base .title{
+	width:70px;
+	height:24px;
+	line-height:24px;
+	display:block;
+	border-left:6px solid #90c41a;
+	margin:20px 0 0 0;
+	text-align:center;	
+}
+.bw_body .base_information{
+	/* width: 1484px; */
+	border: 1px solid  lavender;
+	font-size: 12px;
+	margin-bottom: 40px;
+	table-layout: fixed;
+}
+.bw_body .base_information td{
+	border: 1px solid #D5D5D5;
+	word-break:break-all;
+	word-wrap:break-word;
+}
+.bw_body .base_information .name{
+	background-color: #a1dbf6;
+	height: 28px;
+	text-align: center;
+	max-height:56px;
+}
+.bw_body .base_information .name td{
+	/*border-top: none;*/
+	
+}
+.bw_body .base_information .t1{
+	height: 24px;
+	text-align: center;
+}
+.bw_body .base_information .t1 .td4{
+	max-width:500px;
+	word-break:break-all;
+}
+/*基本信息中的错误信息*/
+.bw_body .wentihr{
+	    border-color: papayawhip;
+}
+.bw_body .error{					
+				margin: 10px 0 0 20px ;
+				
+				padding-left:100px;
+			}
+.bw_body .error .title{
+				height: 20px;
+				line-height: 20px;
+				display: block;
+				font-size: 14px;
+			}
+.bw_body .error .title img{
+				float: left;
+				margin-right: 4px;
+				width: 20px;
+				height: 20px;
+				border-radius: 10px;
+			}
+.bw_body .error .lists{
+				width: 1200px;
+				overflow: hidden;
+			}
+.bw_body .error .lists .list{
+				list-style: none;
+				overflow: hidden;
+				display: block;
+				margin-right: 20px;
+				margin-left:20px;
+				height: 30px;
+				line-height: 30px;
+				float: left;
+				font-size:12px;			
+			}
+	.bw_body .error .lists .list a{
+	color:black;
+	}	
+	.bw_body .wenti2{
+	margin: 10px ;
+	margin-left:20px;
+	font-size:14px;
+	padding-left:100px;
+	}	
+	.bw_body .wenti2 .flag{
+	margin-right:10px;
+	}
+	.bw_body .wenti3{
+	margin: 10px ;
+	margin-left:20px;
+	font-size:14px;
+	padding-left:100px;
+	}
+	.bw_body .wenti3 span{
+	height:20px;
+	
+	display:block;
+	}
+	.bw_body .wenti3 span i{
+	width:20px;
+	height:20px;
+	display:inline-block;
+	margin-right:10px;
+	}
+	.bw_body .wenti3 .list2{
+	padding-top:10px;
+	}
+	.bw_body .wenti3 .list3{
+	font-size:12px;
+	padding:20px 0 6px 20px;
+	color:brown;
+	
+	}
+	.bw_body .wenti3 .list4{
+	color:brown;
+	padding:0 0 10px 20px;
+	font-size:12px;
+	}
+	.bw_body .wenti3 .list5{
+	color:black;
+	font-weight: bold;
+	padding:0 0 10px 20px;
+	font-size:12px;
+	}
+	.bw_body .wenti3 .wenti3_t{
+		min-width:800px;
+		margin-top:20px;
+		table-layout:fixed;
+	}
+	.bw_body .wenti3 .wenti3_t td{
+		border: 1px solid #D5D5D5;
+		word-break:break-all;
+	}
+	.bw_body .wenti3 .wenti3_t th{
+	border: 1px solid #D5D5D5;
+	}
+	.bw_body .wenti3 .wenti3_t .list2 {
+	  background-color: #a1dbf6;
+	  
+	}
+	.bw_body .wenti3 .wenti3_t .list2 td{
+	  text-align: center;
+	}
+	.bw_body .wenti3 .wenti3_t td{
+		font-size:12px;	
+		text-align: center;
+	}
+	
+	.bw_body .wenti4{
+	margin: 10px ;
+	font-size:14px;
+	}	
+	
+	.bw_body .wenti5{
+	margin-left:20px;
+	font-size:14px;
+	}
+	.bw_body .wenti5 span{
+	height:20px;
+	
+	display:block;
+	}
+	.bw_body .wenti5 span i{
+	width:20px;
+	height:20px;
+	display:inline-block;
+	margin-right:10px;
+	}
+	.bw_body .wenti5 .list2{
+	padding-top:10px;
+	}
+	.bw_body .wenti5 .list3{
+	font-size:12px;
+	padding:20px 0 6px 20px;
+	color:brown;
+	
+	}
+	.bw_body .wenti5 .list4{
+	color:brown;
+	padding:0 0 10px 20px;
+	font-size:12px;
+	}
+	.bw_body .wenti5 .list5{
+	color:black;
+	font-weight: bold;
+	padding:0 0 10px 20px;
+	font-size:12px;
+	}
+	.bw_body .wenti5 .wenti3_t{
+	min-width:800px;
+	margin-top:3px;
+	}
+	.bw_body .wenti5 .wenti3_t td{
+	border: 1px solid #D5D5D5;
+	}
+	.bw_body .wenti5 .wenti3_t th{
+	border: 1px solid #D5D5D5;
+	}
+	.bw_body .wenti5 .wenti3_t .list2 {
+	  background-color: #a1dbf6;
+	  
+	}
+	.bw_body .wenti5 .wenti3_t .list2 td{
+	  text-align: center;
+	}
+	.bw_body .wenti5 .wenti3_t td{
+		font-size:12px;	
+		text-align: center;
+	}
+	
+/*通用信息*/
+.general .title{
+	width:70px;
+	height:24px;
+	line-height:24px;
+	display:block;
+	border-left:6px solid #90c41a;
+	margin:20px 0 0px 0;
+	text-align:center;
+}
+.bw_body .general{
+	padding-left:20px;
+	box-sizing: border-box;
+}
+.general .general_information{
+	/* width: 1484px; */
+	border: 1px solid  lavender;
+	font-size: 12px;
+	table-layout: fixed;
+}
+.general .general_information td{
+	border: 1px solid #D5D5D5;
+	word-break:break-all;
+	word-wrap:break-word;
+}
+.bw_body .general_information .name{
+	background-color: #a1dbf6;
+	height: 28px;
+	text-align: center;			
+}
+.bw_body .general_information .name td{
+	
+	/*border-top: none;*/
+}
+.bw_body .general_information .t1{
+	height: 24px;
+	text-align: center;
+}
+.bw_body .general_information .t1 td{
+	height: 24px;	
+	text-align: center;
+	max-width:700px;
+}
+/*详细信息*/
+.bw_body .detailed{
+	padding-left:20px;
+	box-sizing: border-box;
+}
+
+.bw_body .detailed .title{
+	width:70px;
+	height:24px;
+	line-height:24px;
+	display:block;
+	border-left:6px solid #90c41a;
+	margin:20px 0 0px 0;
+	text-align:center;
+}
+
+.detailed 	.detailed_information{
+	/* width: 1484px; */
+	border: 1px solid  lavender;
+	font-size: 12px;
+	table-layout: fixed;
+}
+.detailed 	.detailed_information td{
+	border: 1px solid #D5D5D5;
+	word-break:break-all;
+	word-wrap:break-word;
+}
+.bw_body .detailed_information .name{
+	background-color: #a1dbf6;
+	height: 56px;
+	text-align: center;
+	
+}
+.bw_body .detailed_information .name td{
+	/*border-top: none;*/
+		}
+.bw_body .detailed_information .t1{
+	height: 35px;	
+}
+
+
+#table_summarize td{
+	border: 1px;
+	text-align: left;
+	width: 200px;
+}
+
+.font1{color: #802A2A;font-weight:bold;font-size: 18px}
+.font2{font-size: 13px;color: #008cff;}
+
+
+/*报文处理概述*/
+.messageSummarize{margin-bottom: 30px;font-size:14px;background-color: white;-webkit-border-radius: 8px;-moz-border-radius: 8px;border-radius: 8px;padding: 10px;padding-left: 30px;}
+.messageSummarize span{height:20px;display:block;font-weight:bold;font-size: 18px;}
+.messageSummarize table td{border: 1px;text-align: left;width: 200px;}
+.messageSummarize table td hr{ border-color: papayawhip;}
+.messageSummarize table .td1{border-right: solid 1px;}
+.messageSummarize table .td2{text-align: center;}
+.messageSummarize table .td3{text-align: center;border-right: solid 1px;}
+
+.messageSummarize .wenti3_t{min-width:800px;margin-top:20px;}
+.messageSummarize .wenti3_t td{border: 1px solid #D5D5D5;}
+.messageSummarize .wenti3_t th{border: 1px solid #D5D5D5;}
+.messageSummarize .wenti3_t .list2 {background-color: #a1dbf6;}
+.messageSummarize .wenti3_t .list2 td{text-align: center;}
+.messageSummarize .wenti3_t td{font-size:12px;text-align: center;}
+
+.over {display: none;position:fixed;_position:absolute;top: 0;left: 0;width: 100%;min-height:640px;height: 100%;background-color: #f5f5f5;opacity:0.5;z-index: 1000;overflow:hidden;}
+.layout {display: none;position:fixed;_position:absolute;top: 40%;left: 40%;width: 20%;height: 20%;z-index: 1001;text-align:center;}
+
+
+#table_messageSummarize tr td{
+	text-align: center;
+}
+
+	
+	
+	
+</style>
+</head>
+<body>
+				<!-- **************************报文处理概述开始************************** -->
+				<div class="messageSummarize" id="messageSummarize" >
+			    	<span  style="font-weight:bold;font-size: 18px;">报文处理概述</span>
+			    	<table id="table_messageSummarize" cellpadding="0" cellspacing="0">
+			    		<tr>
+			    			<td valign="top" style="border-right: 1px solid black;"></td>
+			    			<td valign="top" style="border-right: 1px solid black;"><img src="pcapjiexi.jpg"></img></td>
+			    			<td valign="top" style="border-right: 1px solid black;"><img src="pcapqingxi.jpg"></img></td>
+			    			<td valign="top" style="border-right: 1px solid black;"><img src="canshujisuan.jpg"></img></td>
+			    			<td valign="top" ><img src="zhuanjiaxitong.jpg"></img></td>
+			    		</tr>
+			    		<tr>
+			    			<td valign="top" style="border-right: 1px solid black;border-bottom: 1px solid black;"></td>
+			    			<td valign="top" style="border-right: 1px solid black;border-bottom: 1px solid black;">报文解析</td>
+			    			<td valign="top" style="border-right: 1px solid black;border-bottom: 1px solid black;">报文清洗</td>
+			    			<td valign="top" style="border-right: 1px solid black;border-bottom: 1px solid black;">参数计算</td>
+			    			<td valign="top" style="border-bottom: 1px solid black;">专家系统</td>
+			    		</tr>
+			    		<#list basicConclusions.data as basicConclusion >
+			    			<tr style="font-size: 15px;">
+			    				<td valign="top" style="border-right: 1px solid black;<#if basicConclusion_index lt (basicConclusions.data?size-1)>border-bottom: 1px solid black;</#if>">
+			    					${basicConclusion.fileName!""} 报文
+			    				</td>
+			    				<td valign="top" style="border-right: 1px solid black;<#if basicConclusion_index lt (basicConclusions.data?size-1)>border-bottom: 1px solid black;</#if>">
+									<font class='font2'>◆   </font>
+									<font class="font1">${basicConclusion.packetCount!""}</font>条报文
+								</td>
+			    				<td valign="top" style="border-right: 1px solid black;<#if basicConclusion_index lt (basicConclusions.data?size-1)>border-bottom: 1px solid black;</#if>">
+			    					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<font class='font2'>◆   </font>
+									<font class="font1">${basicConclusion.ipCount!""}</font>条有效ip,已清洗
+									<font class="font1">${basicConclusion.othersIpCount!""}</font>条<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<font class='font2'>◆   </font><font class="font1">${basicConclusion.tcpCount!""}</font>条有效链路,已清洗
+									<font class="font1">${basicConclusion.othersTcpCount!""}</font>条<br/>
+			    				</td>
+			    				<td valign="top" style="border-right: 1px solid black;<#if basicConclusion_index lt (basicConclusions.data?size-1)>border-bottom: 1px solid black;</#if>">
+			    					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<font class='font2'>◆   </font>可计算
+									<font class="font1">${basicConclusion.permissableParameterCount!""}</font>个参数<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    					<#if basicConclusion.permissableParameterCount!=18>
+			    						<font class='font2'>◆   </font>${basicConclusion.noPermissablePara!""}
+										<font class="font1">${basicConclusion.noPermissableParaNum!""}</font>个参数无法计算
+			    					</#if>
+			    				</td>
+			    				<td valign="top" style="<#if basicConclusion_index lt (basicConclusions.data?size-1)>border-bottom: 1px solid black;</#if>">
+									<font class='font2'>◆   </font>
+									<font class="font1">${basicConclusion.adviceNum!""}</font>条建议
+								</td>
+			    			</tr>
+			    		</#list>
+			    	</table>
+			    </div>
+			    <!-- **************************报文处理概述结束************************** -->
+			    
+			    
+			    
+			    
+			    <!-- ***************************************************结论概述开始*************************************************** -->
+			    <div class="bw"  id="div_basicConclusion" style="page-break-after:always;">  
+						<div class="bw_body">
+								<div class="wenti5">
+										<span style="font-weight:bold;font-size: 18px;">结论概述</span><br/>
+										<span style="font-weight:bold;font-size: 18px;margin-left: 50px;">${basicConclusions.str1!""}</span>
+						  				<hr  style="border-color: whitesmoke;margin-left: 50px;" />
+										<div style="margin-left:50px"  id="div_jibenjielun">
+												<#list basicConclusions.data as basicConclusion>
+												<div class="div_each" style="width:1000px">
+														<#if (basicConclusion.crossProviceNum gt 1)||basicConclusion.sumOftenOffVerdict!=0||basicConclusion.downloadRate!='N/A'>
+														<#if basicConclusion_index!=0><br/></#if>
+														<font style="font-weight:bold">${basicConclusion.fileName!""}</font>
+														报文涉及
+														<font style="font-weight:bold"> ${basicConclusion.conclusionRes!""}</font>
+														问题情况：
+														<br/>
+														<div id="wenti_basicConclusion" style="margin-left:50px;width:1000px;word-wrap: break-word">
+																		<#if basicConclusion.crossProviceNum gt 1>
+																				<i class="flag" >
+																					<img src="cuo.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/>
+																				</i>
+																				 服务器涉及${basicConclusion.crossProviceNum!""}个地区：   ${basicConclusion.crossProvice!""};
+																				<br/>
+																		</#if>
+																		<#if basicConclusion.sumOftenOffVerdict gt 0>
+																				<i class="flag" >
+																					<img src="cuo.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/>
+																				</i>
+																				频繁拆建链共涉及${basicConclusion.sumOftenOffVerdict!""}次;
+																				<br/>
+																		</#if>
+																		<#if basicConclusion.downloadRate!='N/A'>
+																				<i class="flag" >
+																					<img src="cuo.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/>
+																				</i>
+																				链路不支持 TCP WINDOW SCALE OPTION参数 问题，涉及：${basicConclusion.downloadRate!""};
+																				<br/>
+																		</#if>
+														</div>
+														</#if>
+												</div>
+												</#list>
+										</div>
+										
+										<br/>
+										<span style="font-weight:bold;font-size: 18px;margin-left: 50px;">对比结论</span>
+										<hr class="bw_xian" style="border-color: whitesmoke;margin-left: 50px;" />
+										<#if (basicConclusions.compareInfo.timeEfficiencyAVG=='劣于'||
+											   basicConclusions.compareInfo.avgExchangeTime=='劣于'||
+											   basicConclusions.compareInfo.exchangeFlowCount=='劣于'||
+											   (basicConclusions.compareInfo.pcakageCompareMsg!"")!=""||
+											   (basicConclusions.compareInfo.tcpCountCompareMsg!"")!="")>
+										<span  style="margin-left: 50px;font-size: 14px;">
+												<font style="font-weight:bold">${basicConclusions.data[0].fileName!""}</font> 
+												报文与竞品相比，在
+												<font style="font-weight:bold">
+													<#list basicConclusions.compareInfo.wholeRes as value>
+														<#if value_index==0>
+															 ${value!""} 
+														<#else>
+															 、${value!""} 
+														</#if>
+													</#list> 
+												</font>
+											 	方面可能存在问题。
+										</span>	
+										<div style="margin-left:50px">
+												<div style="margin-left:50px">
+														<#if basicConclusions.compareInfo.timeEfficiencyAVG=='劣于'>
+														<i class="flag" ><img src="cuo.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/></i>
+														<font style="font-weight:bold">${basicConclusions.data[0].fileName!""}</font> 报文在 <font style="font-weight:bold">平均链路效率</font>方面劣于竞品，低${basicConclusions.compareInfo.timeEfficiencyAVGNum!""}%，建议深度分析； <br/>
+														<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-left: 23px;" class="wenti3_t">
+																<tr class="tr_title">
+																	<th>报文名</th>
+																	<th>平均链路效率</th>
+																</tr>
+																<#list basicConclusions.data as basicConclusion>
+																		<tr class="tr_data">
+																			<td> <font>${basicConclusion.fileName!""}</font></td>
+																			<td <#if basicConclusions.compareInfo.timeEfficiencyAVG=='劣于' && basicConclusion_index==0>style="color: red"</#if>>
+																					${basicConclusion.timeEfficiencyAVG!""}%
+																			</td>
+																		</tr>
+																</#list>
+														</table>
+														</#if>
+												</div>	
+							
+												<#if basicConclusions.compareInfo.exchangeTimeCount=='劣于'>
+												<div style="margin-left: 50px;">
+														<i class="flag" ><img src="cuo.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/></i>
+														<font style="font-weight:bold">${basicConclusions.data[0].fileName!""}</font> 
+														报文在
+														<font style="font-weight:bold"> 时间消耗</font>
+														方面劣于竞品，耗时多于竞品
+														${basicConclusions.compareInfo.exchangeTimeCountNum!""}%，可能由于
+														<font style="font-weight:bold"> ${basicConclusions.compareInfo.compareRes!""}</font> 
+														指标导致此问题，建议深度分析； 
+														<#if basicConclusions.compareInfo.avgDnsDelsyTs=='劣于'><br/>
+														 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; » 平均DNS时延比竞品长${basicConclusions.compareInfo.avgDnsDelsyTsNum!""}%；
+														</#if>
+														 <#if basicConclusions.compareInfo.avgTcpTimeDelayed=='劣于'><br/>
+														 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 平均TCP建链时延比竞品长${basicConclusions.compareInfo.avgTcpTimeDelayedNum!""}%；
+														 </#if>
+														 <#if basicConclusions.compareInfo.avgTimeToFirstByte=='劣于'><br/>
+														 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 建链后首包时延比竞品长${basicConclusions.compareInfo.avgTimeToFirstByteNum!""}%；
+														 </#if>
+														 <#if basicConclusions.compareInfo.avgExchangeTime=='劣于'><br/>
+														 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 平均交互时间比竞品长${basicConclusions.compareInfo.avgExchangeTimeNum!""}%；
+														 </#if>
+														 <#if basicConclusions.compareInfo.avgOffTimeDelayed=='劣于'><br/>
+														 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 断链时延比竞品长${basicConclusions.compareInfo.avgOffTimeDelayedNum!""}%；
+														 </#if>
+														 <#if basicConclusions.compareInfo.avgRttTime=='劣于'><br/>
+														 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 平均RTT时间比竞品长${basicConclusions.compareInfo.avgRttTimeNum!""}%；
+														 </#if>
+												</div>
+												<#else>
+												<div style="margin-left: 50px;"><br/>
+														<i class="flag" ><img src="dui.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/></i>
+														<font style="font-weight:bold">${basicConclusions.data[0].fileName!""}</font> 报文在 <font style="font-weight:bold">时间消耗</font>方面优于竞品，耗时少于竞品${basicConclusions.compareInfo.exchangeTimeCountNum!""}%，但以下指标仍劣于竞品 ；
+														<#if basicConclusions.compareInfo.avgDnsDelsyTs=='劣于'><br/>
+															&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 平均DNS时延比竞品长${basicConclusions.compareInfo.avgDnsDelsyTsNum!""}%；
+														</#if>
+														<#if basicConclusions.compareInfo.avgTcpTimeDelayed=='劣于'><br/>
+															&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 平均TCP建链时延比竞品长${basicConclusions.compareInfo.avgTcpTimeDelayedNum!""}%；
+														</#if>
+														<#if basicConclusions.compareInfo.avgTimeToFirstByte=='劣于'><br/>
+															&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 建链后首包时延比竞品长${basicConclusions.compareInfo.avgTimeToFirstByteNum!""}%；
+														</#if>
+														<#if basicConclusions.compareInfo.avgExchangeTime=='劣于'><br/>
+															&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 平均交互时间比竞品长${basicConclusions.compareInfo.avgExchangeTimeNum!""}%；
+														</#if>
+														<#if basicConclusions.compareInfo.avgOffTimeDelayed=='劣于'><br/>
+															&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 断链时延比竞品长${basicConclusions.compareInfo.avgOffTimeDelayedNum!""}%；
+														</#if>
+														<#if basicConclusions.compareInfo.avgRttTime=='劣于'><br/>
+															&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;» 平均RTT时间比竞品长${basicConclusions.compareInfo.avgRttTimeNum!""}%；
+														</#if>
+												</div>
+												</#if>
+										</div>
+										<div style="margin-left:123px" class="div_shijiaoxiaohao">
+												<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:1000px" class="wenti3_t" >
+													<tr class="tr_title">
+														<th>报文名</th>
+														<th>平均DNS时延(ms)</th>
+														<th>平均TCP建链时延(ms)</th>
+														<th>平均建链后首包时延(ms)</th>
+														<th>平均断链时延(ms)</th>
+														<th>平均RTT时间(ms)</th>
+														<th>平均交互时间(ms)</th>
+														<th>总消耗时间(ms)</th>
+													</tr>
+											
+								                  	<#list basicConclusions.data as basicConclusion>
+								                  		<tr class="tr_data">
+								                  		<#if  basicConclusion_index==0>
+								                  			<td>
+								                  					${basicConclusion.fileName!""}
+								                  			</td>
+								                  			<td <#if basicConclusions.compareInfo.avgDnsDelsyTs=='劣于'>style="color: red"</#if>>
+								                  					${basicConclusion.avgDnsDelsyTs!""}
+								                  			</td>
+								                  			<td <#if basicConclusions.compareInfo.avgTcpTimeDelayed=='劣于'>style="color: red"</#if>>
+								                  					${basicConclusion.avgTcpTimeDelayed!""}
+								                  			</td>
+								                  			<td <#if basicConclusions.compareInfo.avgTimeToFirstByte=='劣于'>style="color: red"</#if>>
+								                  					${basicConclusion.avgTimeToFirstByte!""}
+								                  			</td>
+								                  			<td <#if basicConclusions.compareInfo.avgOffTimeDelayed=='劣于'>style="color: red"</#if>>
+								                  					${basicConclusion.avgOffTimeDelayed!""}
+								                  			</td>
+								                  			<td <#if basicConclusions.compareInfo.avgRttTime=='劣于'>style="color: red"</#if>>
+								                  					${basicConclusion.avgRttTime!""}
+								                  			</td>
+								                  			<td <#if basicConclusions.compareInfo.avgExchangeTime=='劣于'>style="color: red"</#if>>
+								                  					${basicConclusion.avgExchangeTime!""}
+								                  			</td>
+															<td <#if basicConclusions.compareInfo.exchangeTimeCount=='劣于'>style="color: red"</#if>>
+																	${basicConclusion.exchangeTimeCount!""}
+															</td>
+								                  		<#else>
+								                  			<td>${basicConclusion.fileName!""}</td>
+								                  			<td>${basicConclusion.avgDnsDelsyTs!""}</td>
+								                  			<td>${basicConclusion.avgTcpTimeDelayed!""}</td>
+								                  			<td>${basicConclusion.avgTimeToFirstByte!""}</td>
+								                  			<td>${basicConclusion.avgOffTimeDelayed!""}</td>
+								                  			<td>${basicConclusion.avgRttTime!""}</td>
+								                  			<td>${basicConclusion.avgExchangeTime!""}</td>
+															<td>${basicConclusion.exchangeTimeCount!""}</td>
+								                  		</#if>
+								                  		</tr>
+								                  	</#list>
+												</table>
+										</div>
+							
+										<div class="wenti5" style="margin-left:100px">
+												<#if basicConclusions.compareInfo.exchangeFlowCount=='劣于'><br/>
+												<i class="flag" ><img src="cuo.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/></i>
+												<font style="font-weight:bold">${basicConclusions.data[0].fileName!""}</font>报文在<font style="font-weight:bold">流量消耗</font>方面劣于竞品，流量消耗多于竞品${basicConclusions.compareInfo.exchangeFlowCountNum!""}%，建议深度分析；<br/>
+												<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-left: 23px;" class="wenti3_t">
+														<tr class="tr_title">
+															<th>报文名</th>
+															<th>交互流量(byte)</th>
+														</tr>
+														<#list basicConclusions.data as basicConclusion>
+															<tr class="tr_data">
+																<td>${basicConclusion.fileName!""}</td>
+																<#if basicConclusion_index==0>
+																<td <#if basicConclusions.compareInfo.exchangeFlowCount=='劣于'>style="color:red;"</#if>>
+																		${basicConclusion.exchangeFlowCount!""}
+																</td>
+																<#else>
+																<td>
+																	${basicConclusion.exchangeFlowCount!""}
+																</td>
+																</#if>
+															</tr>
+														</#list>
+												</table>
+												</#if>
+										</div>
+							
+										<div style="margin-left:100px" class="wenti5">
+												<#if (basicConclusions.compareInfo.pcakageCompareMsg!"")!=""><br/>
+													<i class="flag" ><img src="cuo.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/></i>
+													<font style="font-weight:bold">${basicConclusions.data[0].fileName!""}</font> 报文在<font style="font-weight:bold">报文结构</font>方面劣于竞品，${basicConclusions.compareInfo.pcakageCompareMsg!""}，建议深度分析；
+													<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-left: 23px;" class="wenti3_t">
+														<tr class="tr_title">
+															<th>报文名</th>
+															<th>小包</th>
+															<th>中包</th>
+															<th>大包</th>
+															<th>包数</th>
+														</tr>
+													<#list basicConclusions.data as basicConclusion>
+															<tr class="tr_data">
+																<td>${basicConclusion.fileName!""}</td>
+																<#if  basicConclusion_index==0>
+																<td <#if basicConclusions.compareInfo.smallPacketPercent=='劣于'>style="color: red;"</#if>>${basicConclusion.smallPacketPercent!""}%</td>	
+																<td <#if basicConclusions.compareInfo.mediumPacketPercent=='劣于'>style="color: red;"</#if>>${basicConclusion.mediumPacketPercent!""}%</td>
+																<td <#if basicConclusions.compareInfo.largePacketPercent=='劣于'>style="color: red;"</#if>>${basicConclusion.largePacketPercent!""}%</td>
+																<td <#if basicConclusions.compareInfo.largePacketPercent=='劣于'>style="color: red;"</#if>>${basicConclusion.packetCount!""}</td>
+																<#else>
+																<td>${basicConclusion.smallPacketPercent!""}%</td>	
+																<td>${basicConclusion.mediumPacketPercent!""}%</td>
+																<td>${basicConclusion.largePacketPercent!""}%</td>
+																<td>${basicConclusion.packetCount!""}</td>
+																</#if>
+															</tr>
+													</#list>	
+													</table>
+												</#if>
+										</div>
+							
+										<div style="margin-left:100px" class="wenti5">
+												<#if (basicConclusions.compareInfo.tcpCountCompareMsg!"")!=""><br/>
+												<#if basicConclusions.compareInfo.tcpCountRes=='劣于'>
+												<i class="flag" ><img src="cuo.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/></i>	
+												<font style="font-weight:bold">${basicConclusions.compareInfo.fileName!""}</font> 报文在<font style="font-weight:bold">链路数</font>方面劣于竞品，链路数共${basicConclusions.data[0].tcpCount!""}条，多于竞品${basicConclusions.compareInfo.tcpCountPercent!""}%
+												<#if basicConclusions.compareInfo.ipCountRes=='劣于'>，IP数多于竞品 </#if>，建议深度分析；
+												<#else>
+												<i class="flag" ><img src="dui.jpg" style="width: 15px;height: 15px;border-radius: 10px;"/></i>	
+												<font style="font-weight:bold">${basicConclusions.compareInfo.fileName!""}</font> 报文在<font style="font-weight:bold">链路数</font>方面优于竞品，链路数共${basicConclusions.data[0].tcpCount!""}条，少于竞品${basicConclusions.compareInfo.tcpCountPercent!""}%
+												<#if basicConclusions.compareInfo.ipCountRes=='劣于'>，但IP数仍多于竞品；
+												</#if>
+												</#if>
+												<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-left: 23px;" class="wenti3_t">
+												        <tr class="tr_title">
+												        	<th>报文名</th>
+												        	<th>IP数(个)</th>
+												        	<th>链路数(个)</th>
+												        </tr>
+												        <#list basicConclusions.data as basicConclusion>
+											        	<tr class="tr_data">
+											        		<td>${basicConclusion.fileName!""}</td>
+											        		<#if basicConclusion_index==0>
+									        				<td <#if basicConclusions.compareInfo.ipCountRes=='劣于'>style="color: red;"</#if>>${basicConclusion.ipCount!""}</td>
+									        				<td <#if basicConclusions.compareInfo.tcpCountRes=='劣于'>style="color: red;"</#if>>${basicConclusion.tcpCount!""}</td>
+											        		<#else>
+									        				<td>${basicConclusion.ipCount!""}</td>
+									        				<td>${basicConclusion.tcpCount!""}</td>
+											        		</#if>
+											        	</tr>
+												        </#list>
+												</table>
+												</#if>
+										</div>
+										<#else>
+												<span style="margin-left: 50px;font-size:14px"><font style="font-weight:bold">${basicConclusions.data[0].fileName!""}</font> 
+													报文在  链路效率、时间消耗、流量消耗、报文结构、链路数  方面优于竞品。
+												</span>	
+										</#if>
+								 </div>
+						</div>
+				</div>
+			    <!-- ***************************************************结论概述结束*************************************************** -->
+			    
+			    
+			    
+			    
+			    
+			    
+			    <#list fileInfos as fileInfo> 
+				  <div class="bw" >  	 
+					    <h3 class="bw_title" style="font-size:18px;">详细信息显示</h3>
+					    <h3 style="font-size:17px;">${fileInfo.fileName!""}</h3>
+					  	<hr class="bw_xian" style="border-color: whitesmoke;"></hr>	   	
+				  		<div class="bw_body">
+				  				<!-- ****************************************************基本信息开始**************************************************** -->
+								<div class="base">
+									<span class="title">基本信息</span>
+							  		<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border:1px solid #CCC;"  class="base_information">
+										<tr class="name">
+											<td style="width:100px;">持续时间(ms)</td>
+											<td style="width: 100px;">数据传输时间(ms)</td>
+											<td style="width: 100px;">传输总包数(个)</td>
+											<td style="width: 400px;">传输量最大IP及端口</td>
+											<td style="width: 100px;">传输总字节(byte)</td>
+											<td style="width: 100px;">总链路数(个)</td>
+											<td style="width: 100px;">链路最多IP</td>
+											<td style="width: 110px;">链路最多IP(链路数)</td>
+										</tr>
+										<tr class="t1">
+											<td style="width:100px;">${fileInfo.allKeepTimes!""}</td>
+											<td style="width:100px;">${fileInfo.allFileDataTimes!""}</td>
+											<td style="width:100px;">${fileInfo.packetCount!""}</td>
+											<td style="width:400px;">${fileInfo.maxFlowIP!""}(${fileInfo.maxFlowPort!""})</td>					
+											<td style="width:100px;">${fileInfo.exchangeFlowCount!""}</td>
+											<td style="width:100px;">${fileInfo.tcpCount!""}</td>
+											<td style="width:100px;">${fileInfo.maxTCPip!""}</td>
+											<td style="width:110px;">${fileInfo.ipTCPCounts!""}</td>
+										</tr>
+									</table>
+								</div>			
+								<!-- ****************************************************基本信息结束**************************************************** -->
+								
+								<!-- ****************************************************频繁拆建链开始**************************************************** -->
+								<#list fileInfo.rebuildInfo as rebuildInfo>
+								 	<div class="error">
+										<span class="title">
+											<i class="flag">
+												<img src="cuo.jpg"/>
+											</i>
+											频繁拆建链
+										</span>
+										<ul class="lists">
+											<#if rebuildInfo.serviceIp??>
+											    <li class="list"><i>IP:</i><em>${rebuildInfo.serviceIp!""}</em></li>
+											</#if>
+											<#if rebuildInfo.host??>
+											    <li class="list"><i>域名解析地址:</i><em>${rebuildInfo.host!""}</em></li>
+											</#if>
+											<#if rebuildInfo.repeatCount??>
+											    <li class="list"><i>拆建链的数目:</i><em>${rebuildInfo.repeatCount!""}个</em></li>
+											</#if>
+											<#if rebuildInfo.minLastTimeDelayed??>
+											   	<li class="list"><i>最短键连间隔:</i><em>${rebuildInfo.minLastTimeDelayed!""}ms</em></li>
+											</#if>
+											<#if rebuildInfo.avgLastTimeDelayed??>
+											   	<li class="list"><i>平均建立时间:</i><em>${rebuildInfo.avgLastTimeDelayed!""}ms</em></li>
+											</#if>
+										</ul>
+									</div>
+								</#list>
+								<!-- ****************************************************频繁拆建链结束**************************************************** -->
+								
+							<!--******************************************** 通用信息开始******************************************** -->
+							<div class="general">
+								<span class="title">通用信息</span>
+						  		<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border:1px solid #CCC;"  class="general_information">
+									<tr class="name">
+											<td style="width: 400px;">Server IP</td>
+											<td style="width: 100px;">DNS时延(ms)</td>
+											<td style="width: 100px;">链路数(个)</td>
+											<td style="width: 100px;">包数(个)</td>
+											<td style="width: 100px;">交互流量(byte)</td>
+											<td style="width: 100px;">交互时间(ms)</td>
+											<td style="width: 150px;">平均链路时间有效率(%)</td>
+									</tr>			
+									<tr class="t1">							
+											<td style="width: 400px;">
+												<#list fileInfo.serviceIP as serviceIP>
+														<#if serviceIP_index!=0>、</#if>
+														${serviceIP.serviceIP!""}
+												</#list>
+											</td>			
+											<td style="width: 100px;">${fileInfo.dnsTimeDelayedcount!""}</td>
+											<td style="width: 100px;">${fileInfo.tcpCount!""}</td>
+											<td style="width: 100px;">${fileInfo.packetCount!""}</td>
+											<td style="width: 100px;">${fileInfo.exchangeFlowCount!""}</td>
+											<td style="width: 100px;">${fileInfo.exchangeTimeCount!""}</td>
+											<td style="width: 150px;">${fileInfo.timeEfficiencyAVG!""}</td>
+									</tr>		
+								</table>
+				            </div>
+				            <!--******************************************** 通用信息结束******************************************** -->
+				            
+				            <!--******************************************** 详细信息开始******************************************** -->
+							<div class="detailed">
+								<!-- <span class="detailed_click" style="cursor: pointer;">&nbsp;&nbsp;&nbsp;-&nbsp;<em>展开详细信息</em>&nbsp;<i>+</i></span> -->
+								<span class="title">详细信息</span>
+						  		<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border:1px solid #CCC;"  class="detailed_information">
+									<tr class="name">
+										<td  style="width: 100px;">server IP</td>	
+										<#if whoShow.a10>
+											<td  style="width: 50px;">DNS时延(ms)</td>
+										</#if>
+										<td  style="width: 50px;">端口号</td>
+										<#if whoShow.a12>
+											<td  style="width: 70px;">TCP建链<br/>时延(ms)</td>
+										</#if>
+										<#if whoShow.a6>
+											<td  style="width: 50px;">请求类别</td>
+										</#if>
+										<#if whoShow.a8>
+											<td  style="width: 70px;">建链后首<br/>包时延(ms)</td>
+										</#if>
+										<#if whoShow.a3>
+											<td  style="width: 50px;">包数(个)</td>
+										</#if>
+										<#if whoShow.a2>
+											<td  style="width: 90px;">交互流量(byte)</td>
+										</#if>
+										<#if whoShow.a1>
+											<td  style="width: 80px;">交互时间(ms)</td>
+										</#if>
+										<#if whoShow.a17>
+											<td  style="width: 60px;">链路时间<br/>有效率(%)</td>
+										</#if>
+										<#if whoShow.a13>
+											<td  style="width: 50px;">重传识别(次)</td>
+										</#if>
+										<#if whoShow.a11>
+											<td  style="width: 60px;">平均RTT<br/>时间(ms)</td>
+										</#if>
+										<#if whoShow.a9>
+											<td  style="width: 50px;">断链时延(ms)</td>
+										</#if>
+										<#if whoShow.a14>
+											<td  style="width: 70px;">与上条链路<br/>串并行关系</td>
+										</#if>
+										<#if whoShow.a15>
+											<td  style="width: 80px;">与上条链路<br/>间隔时延(ms)</td>
+										</#if>
+										<#if whoShow.a16>
+											<td  style="width: 90px;">串行链路频繁拆<br/>建链判断(0~1s)</td>
+										</#if>
+										<#if whoShow.a5>
+											<td  onload="rowspan" style="width: 100px;">服务器IP归属</td>
+										</#if>
+									</tr>
+				               		<!-- 双层for循环遍历sericeIP:port信息 -->
+									<#list fileInfo.serviceIP as serviceIP>
+										<#list serviceIP.serviceIPInfo as serviceIPInfo>
+											<tr class="t1">
+												<#if serviceIPInfo_index==0>
+													<td  style="width: 100px;"  rowspan="${serviceIP.serviceIPInfo?size}"><#if serviceIPInfo_index==0>${serviceIPInfo.serverIP!""}</#if></td>
+												</#if>
+												<#if whoShow.a10>
+													<#if serviceIPInfo_index==0>
+														<td  style="width: 50px;" rowspan="${serviceIP.serviceIPInfo?size}">${serviceIPInfo.dnsDelsyTs!""}</td>
+													</#if>
+												</#if>
+												<td  style="width: 50px;">${serviceIPInfo.ports!""}</td>
+												<#if whoShow.a12>
+													<td  style="width: 70px;">${serviceIPInfo.tcpTimeDelayed!""}</td>
+												</#if>
+												<#if whoShow.a6>
+													<td  style="width: 50px;">${serviceIPInfo.requestCategoryBreviary!""}</td>
+												</#if>
+												<#if whoShow.a8>
+													<td  style="width: 70px;">${serviceIPInfo.timeToFirstByte!""}</td>
+												</#if>
+												<#if whoShow.a3>
+													<td  style="width: 50px;">${serviceIPInfo.packetCount!""}</td>
+												</#if>
+												<#if whoShow.a2>
+													<td  style="width: 90px;">${serviceIPInfo.exchangeFlow!""}</td>
+												</#if>
+												<#if whoShow.a1>
+													<td  style="width: 80px;">${serviceIPInfo.exchangeTime!""}</td>
+												</#if>
+												<#if whoShow.a17>
+													<td  style="width: 60px;">${serviceIPInfo.timeEfficiency!""}</td>
+												</#if>
+												<#if whoShow.a13>
+													<td  style="width: 50px;">${serviceIPInfo.againRequestCount!""}</td>
+												</#if>
+												<#if whoShow.a11>
+													<td  style="width: 60px;">${serviceIPInfo.rttTime!""}</td>
+												</#if>
+												<#if whoShow.a9>
+													<td  style="width: 50px;">${serviceIPInfo.offTimeDelayed!""}</td>
+												</#if>
+												<#if whoShow.a14>
+													<td  style="width: 70px;">${serviceIPInfo.lastRelationship!""}</td>
+												</#if>
+												<#if whoShow.a15>
+													<td  style="width: 80px;">${serviceIPInfo.lastTimeDelayed!""}</td>
+												</#if>
+												<#if whoShow.a16>
+													<td  style="width: 90px;">${serviceIPInfo.oftenOffVerdict!""}</td>
+												</#if>
+												<#if whoShow.a5>
+													<#if serviceIPInfo_index==0>
+														<td style="width: 100px;"
+															rowspan="${serviceIP.serviceIPInfo?size}">
+																${serviceIP.ipAddr!""}
+														</td>
+													</#if>
+												</#if>
+											</tr>					
+										</#list>			
+									</#list>	
+									<#if whoShow.a7>
+											<tr>
+												<td style="color:black;width: 10px;" colspan="20">
+														无效IP<br/>
+														<#if fileInfo.others??>
+															<#list fileInfo.others as other>&nbsp;&nbsp;${other!""}</#list>
+														<#else>
+															(无)
+														</#if>
+												</td>
+											</tr>	
+									</#if>		
+								</table>
+							</div>	  		
+							<!--******************************************** 详细信息结束******************************************** -->
+				  		</div>
+				  </div> 
+				</#list>
+			    <!-- **************************【详细信息】结束************************** -->
+	<!-- 	</div> -->
+</body>
+</html>

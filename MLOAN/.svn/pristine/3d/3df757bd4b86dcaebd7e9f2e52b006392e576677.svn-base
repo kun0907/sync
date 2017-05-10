@@ -1,0 +1,294 @@
+package com.vo;
+
+import java.util.List;
+import java.util.Map;
+
+public class FileInfo {
+	
+	private String fileName;
+	private String dnsTimeDelayedcount;
+	private int tcpCount;
+	private int packetCount;
+	private double exchangeFlowCount;
+	private String exchangeTimeCount;
+	private String timeEfficiencyAVG;
+	private List<ServiceIP> serviceIP;
+	private List<Map<String, Object>> mapEthLen;
+	private String allKeepTimes; //总持续时间
+	private String allFileDataTimes; //总数据传输时间
+	private String maxFlowIP;//传输量最大IP及端口
+	private String maxFlowPort;
+	private String maxTCPip;
+	
+	/**Time to First Send/Response  */
+	private String avgT1;
+	private String avgT2;
+	//  临时静态值，将来需要获取
+	private double avgAqyT1 = 0.73;
+	private double avgAqyT2 = 60.53;
+	private double avgTxT1 = 1.44;
+	private double avgTxT2 = 51.27;
+	private double avgMgT1 = 3.34;
+	private double avgMgT2 = 109.29;
+	//当前和基本参数比较  计算结果   （0、耗时多于，1、耗时低于，2、耗时相似于）
+	private int avgT1Rs;		
+	private String avgAqyT1Rs;
+	private String avgTxT1Rs;
+	private int avgT2Rs;
+	private String avgAqyT2Rs;
+	private String avgTxT2Rs;
+	
+	private String downloadRate;
+	private int ipTCPCounts;
+	private List<RebuildInfo> rebuildInfo;
+	private GrathVO grath;
+	private List<String> others;
+	
+	public GrathVO getGrath() {
+		return grath;
+	}
+	public void setGrath(GrathVO grath) {
+		this.grath = grath;
+	}
+	public List<String> getOthers() {
+		return others;
+	}
+	public void setOthers(List<String> others) {
+		this.others = others;
+	}
+	public int getIpTCPCounts() {
+		return ipTCPCounts;
+	}
+	public void setIpTCPCounts(int ipTCPCounts) {
+		this.ipTCPCounts = ipTCPCounts;
+	}
+	public String getMaxFlowIP() {
+		return maxFlowIP;
+	}
+	public void setMaxFlowIP(String maxFlowIP) {
+		this.maxFlowIP = maxFlowIP;
+	}
+	public String getMaxFlowPort() {
+		return maxFlowPort;
+	}
+	public void setMaxFlowPort(String maxFlowPort) {
+		this.maxFlowPort = maxFlowPort;
+	}
+	public String getMaxTCPip() {
+		return maxTCPip;
+	}
+	public void setMaxTCPip(String maxTCPip) {
+		this.maxTCPip = maxTCPip;
+	}
+	public String getAllKeepTimes() {
+		return allKeepTimes;
+	}
+	public void setAllKeepTimes(String allKeepTimes) {
+		this.allKeepTimes = allKeepTimes;
+	}
+	public String getAllFileDataTimes() {
+		return allFileDataTimes;
+	}
+	public void setAllFileDataTimes(String allFileDataTimes) {
+		this.allFileDataTimes = allFileDataTimes;
+	}
+	public String getDnsTimeDelayedcount() {
+		return dnsTimeDelayedcount;
+	}
+	public void setDnsTimeDelayedcount(String dnsTimeDelayedcount) {
+		this.dnsTimeDelayedcount = dnsTimeDelayedcount;
+	}
+	public int getTcpCount() {
+		return tcpCount;
+	}
+	public void setTcpCount(int tcpCount) {
+		this.tcpCount = tcpCount;
+	}
+	public int getPacketCount() {
+		return packetCount;
+	}
+	public void setPacketCount(int packetCount) {
+		this.packetCount = packetCount;
+	}
+	public double getExchangeFlowCount() {
+		return exchangeFlowCount;
+	}
+	public void setExchangeFlowCount(double exchangeFlowCount) {
+		this.exchangeFlowCount = exchangeFlowCount;
+	}
+	public String getExchangeTimeCount() {
+		return exchangeTimeCount;
+	}
+	public void setExchangeTimeCount(String exchangeTimeCount) {
+		this.exchangeTimeCount = exchangeTimeCount;
+	}
+	public List<Map<String, Object>> getMapEthLen() {
+		return mapEthLen;
+	}
+	public void setMapEthLen(List<Map<String, Object>> mapEthLen) {
+		this.mapEthLen = mapEthLen;
+	}
+	public String getTimeEfficiencyAVG() {
+		return timeEfficiencyAVG;
+	}
+	public void setTimeEfficiencyAVG(String timeEfficiencyAVG) {
+		this.timeEfficiencyAVG = timeEfficiencyAVG;
+	}
+	public List<ServiceIP> getServiceIP() {
+		return serviceIP;
+	}
+	public void setServiceIP(List<ServiceIP> serviceIP) {
+		this.serviceIP = serviceIP;
+	}
+	public String getFileName() {
+		return fileName;
+	}
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+	public List<RebuildInfo> getRebuildInfo() {
+		return rebuildInfo;
+	}
+	public void setRebuildInfo(List<RebuildInfo> rebuildInfos) {
+		this.rebuildInfo = rebuildInfos;
+	}
+	public void setDownloadRate(String downloadRate) {
+		this.downloadRate = downloadRate;
+	}
+	public String getDownloadRate() {
+		return downloadRate;
+	}
+	public String getavgT1() {
+		return avgT1;
+	}
+	public void setavgT1(String avgT1) {
+		this.avgT1 = avgT1;
+	}
+	public String getavgT2() {
+		return avgT2;
+	}
+	public void setavgT2(String avgT2) {
+		this.avgT2 = avgT2;
+	}
+	public double getavgAqyT1() {
+		return avgAqyT1;
+	}
+	public void setavgAqyT1(double avgAqyT1) {
+		this.avgAqyT1 = avgAqyT1;
+	}
+	public double getavgAqyT2() {
+		return avgAqyT2;
+	}
+	public void setavgAqyT2(double avgAqyT2) {
+		this.avgAqyT2 = avgAqyT2;
+	}
+	public double getavgTxT1() {
+		return avgTxT1;
+	}
+	public void setavgTxT1(double avgTxT1) {
+		this.avgTxT1 = avgTxT1;
+	}
+	public double getavgTxT2() {
+		return avgTxT2;
+	}
+	public void setavgTxT2(double avgTxT2) {
+		this.avgTxT2 = avgTxT2;
+	}
+	public double getavgMgT1() {
+		return avgMgT1;
+	}
+	public void setavgMgT1(double avgMgT1) {
+		this.avgMgT1 = avgMgT1;
+	}
+	public double getavgMgT2() {
+		return avgMgT2;
+	}
+	public void setavgMgT2(double avgMgT2) {
+		this.avgMgT2 = avgMgT2;
+	}
+	public String getAvgT1() {
+		return avgT1;
+	}
+	public void setAvgT1(String avgT1) {
+		this.avgT1 = avgT1;
+	}
+	public String getAvgT2() {
+		return avgT2;
+	}
+	public void setAvgT2(String avgT2) {
+		this.avgT2 = avgT2;
+	}
+	public double getAvgAqyT1() {
+		return avgAqyT1;
+	}
+	public void setAvgAqyT1(double avgAqyT1) {
+		this.avgAqyT1 = avgAqyT1;
+	}
+	public double getAvgAqyT2() {
+		return avgAqyT2;
+	}
+	public void setAvgAqyT2(double avgAqyT2) {
+		this.avgAqyT2 = avgAqyT2;
+	}
+	public double getAvgTxT1() {
+		return avgTxT1;
+	}
+	public void setAvgTxT1(double avgTxT1) {
+		this.avgTxT1 = avgTxT1;
+	}
+	public double getAvgTxT2() {
+		return avgTxT2;
+	}
+	public void setAvgTxT2(double avgTxT2) {
+		this.avgTxT2 = avgTxT2;
+	}
+	public double getAvgMgT1() {
+		return avgMgT1;
+	}
+	public void setAvgMgT1(double avgMgT1) {
+		this.avgMgT1 = avgMgT1;
+	}
+	public double getAvgMgT2() {
+		return avgMgT2;
+	}
+	public void setAvgMgT2(double avgMgT2) {
+		this.avgMgT2 = avgMgT2;
+	}
+	public int getAvgT1Rs() {
+		return avgT1Rs;
+	}
+	public void setAvgT1Rs(int avgT1Rs) {
+		this.avgT1Rs = avgT1Rs;
+	}
+	public String getAvgAqyT1Rs() {
+		return avgAqyT1Rs;
+	}
+	public void setAvgAqyT1Rs(String avgAqyT1Rs) {
+		this.avgAqyT1Rs = avgAqyT1Rs;
+	}
+	public String getAvgTxT1Rs() {
+		return avgTxT1Rs;
+	}
+	public void setAvgTxT1Rs(String avgTxT1Rs) {
+		this.avgTxT1Rs = avgTxT1Rs;
+	}
+	public int getAvgT2Rs() {
+		return avgT2Rs;
+	}
+	public void setAvgT2Rs(int avgT2Rs) {
+		this.avgT2Rs = avgT2Rs;
+	}
+	public String getAvgAqyT2Rs() {
+		return avgAqyT2Rs;
+	}
+	public void setAvgAqyT2Rs(String avgAqyT2Rs) {
+		this.avgAqyT2Rs = avgAqyT2Rs;
+	}
+	public String getAvgTxT2Rs() {
+		return avgTxT2Rs;
+	}
+	public void setAvgTxT2Rs(String avgTxT2Rs) {
+		this.avgTxT2Rs = avgTxT2Rs;
+	}
+	
+}

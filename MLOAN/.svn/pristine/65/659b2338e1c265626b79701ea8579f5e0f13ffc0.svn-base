@@ -1,0 +1,1631 @@
+package com.util.base;
+
+import java.awt.Color;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.net.MalformedURLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import com.constant.SysInfoConfig;
+import com.lowagie.text.BadElementException;
+import com.lowagie.text.Cell;
+import com.lowagie.text.Chunk;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.HeaderFooter;
+import com.lowagie.text.Image;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.Table;
+import com.lowagie.text.pdf.AcroFields;
+import com.lowagie.text.pdf.BaseFont;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfCopy;
+import com.lowagie.text.pdf.PdfGState;
+import com.lowagie.text.pdf.PdfImportedPage;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.PdfStamper;
+import com.lowagie.text.pdf.PdfWriter;
+import com.vo.RebuildInfo;
+
+/**
+ * @author 作者 E-mail:lipengfei0716@163.com
+ * @date 创建时间：2016年11月29日 下午3:59:48
+ * @version 1.0
+ * @类的说明:
+ * 
+ * 
+ */
+public class PDFUti {
+	public static  BaseFont FONT_SIMYOU = null;
+	static{
+		try {
+			FONT_SIMYOU = BaseFont.createFont("//config/SIMYOU.TTF",BaseFont.IDENTITY_H,BaseFont.NOT_EMBEDDED);
+		} catch (DocumentException | IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	
+
+	// 总方法
+	@SuppressWarnings("resource")
+	public String pdfMethod(HttpServletRequest request,
+						    List<List<String>> baseInfoTable,//baseInfoTable
+						    HttpServletResponse response,
+						    List<List<String>> popularInfoTable, //popularInfoTable
+						    List<List<String>> detailsInfoTable,// detailsInfoTable
+						    String Svalue,//水印信息
+						    String pdfTitle,//title   移动互联网业务品质智能测评系统 (V_0.8.5_alpha)
+						    String pcapFileName,//[aqydelay.pcap]
+						    String username,//username
+						    List<List<String>> invalidIpTable,//无效ip集合(invalidIpTable)
+						    List<RebuildInfo> rebuildInfos, //频繁拆建链信息集合
+						    List<String> kindInfo, 
+						    List<List<String>> timeToFirstTible,
+						    ArrayList<ArrayList<String>> subNameList) throws Exception {
+			String template = new File(this.getClass().getClassLoader().getResource("").getPath()).toString();
+			String templatePath = template + "//config//word1.pdf";
+			
+			@SuppressWarnings("deprecation")
+			String webpath = request.getRealPath("/");
+			String yemei = webpath + "design//img//yemei.png";
+			String yejiao = webpath + "design//img//yejiao.png";
+			String echartsPath = webpath + "Echarts/"+username;
+			String errorImg = webpath + "design//img//home_form3//";
+			
+			String currUserPdfDir=webpath+ "tempPdf//"+username+"//";
+			File pdfDir = new File(currUserPdfDir);
+			if(pdfDir.exists()){
+			    	pdfDir.delete();
+			}
+			pdfDir.mkdirs();
+			
+			String tempPDFPath =currUserPdfDir+"tempPdf.pdf";// 生成的新文件路径转换的;
+			String finalPdfPath = currUserPdfDir+pcapFileName + "的测试报告.pdf";// 最后的文件名字;
+			
+			PdfReader templateReader = new PdfReader(templatePath);// 读取模板
+			ByteArrayOutputStream tempBaos = new ByteArrayOutputStream();// 预存（后面合并pdf需要使用）
+			PdfStamper stamp = new PdfStamper(templateReader, tempBaos);// 读取到的模板放入预存中
+			AcroFields fields = stamp.getAcroFields();
+			Map<String, String> data = data(pdfTitle, pcapFileName, createDate(), username);
+			fillPdfTemplateForm(fields, data);//填充顶部版本等原信息
+			stamp.setFormFlattening(true);
+			templateReader.close();
+			stamp.close();
+			
+			Document doc = new Document(templateReader.getPageSize(1));
+			ByteArrayOutputStream detaialBaos = new ByteArrayOutputStream();
+			PdfWriter.getInstance(doc, detaialBaos);
+			
+			setHeaderAndFooter(yemei,yejiao,doc);//设置页眉页脚图片
+			
+			// 图形(表格table)绘制
+			newgenOtherTable(request, baseInfoTable, response, popularInfoTable, detailsInfoTable, doc, errorImg, invalidIpTable, rebuildInfos, kindInfo, null/*timeToFirst*/, timeToFirstTible);
+			
+			//图表(图片)添加
+			addEchartsImg(subNameList, echartsPath, doc);
+			
+			doc.close();
+			
+			OutputStream outputStream = new FileOutputStream(tempPDFPath);// 合并模板与其它页，并生成最后报表
+	
+			List<ByteArrayOutputStream> list = new ArrayList<ByteArrayOutputStream>();
+			list.add(tempBaos);
+			list.add(detaialBaos);
+	
+			mergePdfFiles(list,outputStream);
+			addShYin(tempPDFPath, Svalue, finalPdfPath,request);//加入水印信息
+	
+			File file = new File(tempPDFPath);
+			System.out.println(file.exists());
+			file.delete();
+			
+			return finalPdfPath;
+	}
+	
+	
+	//"视频比较"或"基本信息比较"
+	public String pdfMethod_Compare(HttpServletRequest request,
+						    List<List<List<String>>> dataListList,//baseInfoTable
+						    HttpServletResponse response,
+						    List<List<List<String>>> dataList1List, //popularInfoTable
+						    List<List<List<String>>> dataList2List,// detailsInfoTable
+						    String Svalue,//水印信息
+						    List<String> pdfTitleList,//title
+						    String[] pcapFileNames,
+						    String username,//username
+						    List<List<List<String>>> dataList3List,//detailsInfoOthersList(无效ip列表)
+						    List<List<RebuildInfo>> rebuildInfosList, 
+						    List<List<String>> kindInfoList, 
+						    List<List<String>> timeToFirstTable,
+						    ArrayList<ArrayList<String>> subNameList,
+						    List<List<String>> baseInfoCompareList,//页面"基本信息比较"表格
+						    HashMap<String, String> baseInfoCompareResult//"基本信息比较"表格上面的"比较结果"信息
+						    ) throws Exception {
+			String template = new File(this.getClass().getClassLoader().getResource("").getPath()).toString();
+			String templatePath = template + "//config//word1.pdf";
+	
+			@SuppressWarnings("deprecation")
+			String webpath = request.getRealPath("/");
+			String yemei = webpath + "design//img//yemei.png";
+			String yejiao = webpath + "design//img//yejiao.png";
+			String tupian = webpath + "Echarts/"+username;
+			String errorImg = webpath + "design//img//home_form3//";
+			
+			String currUserPdfDir=webpath+ "tempPdf//"+username+"//";
+			File pdfDir = new File(currUserPdfDir);
+			if(pdfDir.exists()){
+			    	pdfDir.delete();
+			}
+			pdfDir.mkdirs();
+			
+			String tempPDFPath = currUserPdfDir+"tempPdf.pdf";// 生成的新文件路径转换的;
+			String finalPdfPath = currUserPdfDir+pcapFileNames[0]+"和" +pcapFileNames[1]+ "的对比测试报告.pdf";// 最后的文件名字;
+	
+			// 读取模板
+			PdfReader templateReader = new PdfReader(templatePath);
+			// 预存
+			ByteArrayOutputStream tempBaos = new ByteArrayOutputStream();
+			// 读取到的模板放入预存中
+			PdfStamper stamp = new PdfStamper(templateReader, tempBaos);
+			
+			@SuppressWarnings("unused")
+			PdfContentByte under = stamp.getUnderContent(1);
+			
+			
+			//填充顶部模板版本等字段信息
+			AcroFields fields = stamp.getAcroFields();
+			Map<String, String> data = data(pdfTitleList.get(0),pcapFileNames[0]+" & "+pcapFileNames[1],createDate(),username);
+			fillPdfTemplateForm(fields, data);
+			
+			stamp.setFormFlattening(true);
+			templateReader.close();
+			stamp.close();
+			
+			@SuppressWarnings("unused")
+			int totalPage = 0;
+			
+			Document doc = new Document(templateReader.getPageSize(1));
+			ByteArrayOutputStream detaialBaos = new ByteArrayOutputStream();
+			PdfWriter writer = PdfWriter.getInstance(doc, detaialBaos);
+			
+			setHeaderAndFooter(yemei,yejiao,doc);//设置页眉页脚图片
+			
+			Color color = new Color(165, 42, 42);
+			
+			Paragraph para=null;
+			//*******************************************视频业务对比开始*******************************************
+			if(timeToFirstTable!=null&&timeToFirstTable.size()>1){
+					 para = new Paragraph(new Chunk("视频业务对比",new Font(FONT_SIMYOU,16f)));
+					 doc.add(para);
+					
+					 renderTtFTable(doc, timeToFirstTable);//绘制"TtFS"和"TtFR"的表格
+					 renderTtFComment(doc,timeToFirstTable.get(1).get(1),
+										 timeToFirstTable.get(2).get(1),
+										 timeToFirstTable.get(1).get(2),
+										 timeToFirstTable.get(2).get(2),
+										 timeToFirstTable.get(1).get(0),
+										 timeToFirstTable.get(2).get(0));//绘制绘制"TtFS"和"TtFR"表格下面的说明(包括：TtFs和TtFr相差百分比)
+					
+					 //绘制各自的kindinfo信息
+					 Paragraph paragraph1=null;
+					 for(int i=0;i<2;i++){
+							 paragraph1= new Paragraph(new Chunk(pcapFileNames[i],new Font(FONT_SIMYOU,16f)));
+							 paragraph1.setIndentationLeft(80f);
+							 doc.add(paragraph1);
+							 //分隔线(有时间再实现)
+							 List<String> kindInfo = kindInfoList.get(i);
+							 renderKindInfoMsg(doc, kindInfo, errorImg);//绘制"kindInfo"信息
+					 }
+					 paragraph1 = new Paragraph(new Chunk("服务器不支持TCP  WINDOW  SCALE  OPTION参数，会影响下载速率。",new Font(FONT_SIMYOU,10,Font.NORMAL, new Color(165, 42, 42))));
+					 paragraph1.setIndentationLeft(90f);
+					 doc.add(paragraph1);
+			}
+			
+			//*******************************************视频业务对比结束*******************************************
+			 
+			
+			//*******************************************基本信息比较开始*******************************************
+			if(baseInfoCompareResult!=null&&baseInfoCompareResult.size()>0){//"基本信息比较"表格上面的"比较结果"信息说明
+					 doc.newPage();
+					 para = new Paragraph(new Chunk("基本信息对比",new Font(FONT_SIMYOU,16f)));
+					 doc.add(para);
+					 para = new Paragraph(new Chunk("对比结果",new Font(FONT_SIMYOU,13f)));
+					 para.setIndentationLeft(80f);
+					 doc.add(para);
+					 
+					 int fsize=10;
+					 
+					 para = new Paragraph(new Chunk("1 ) 交互时间",new Font(FONT_SIMYOU,fsize)));
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+					 if(baseInfoCompareResult.get("commuTime").equals("N/A")){
+						 	para = new Paragraph(new Chunk("N/A",new Font(FONT_SIMYOU,fsize)));
+					 }else{
+							para = new Paragraph(new Chunk("基础数据 "+baseInfoCompareResult.get("commuTime")+" 竞品数据",new Font(FONT_SIMYOU,fsize)));
+					 }
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+					 
+					 para = new Paragraph(new Chunk("2 ) 交互流量",new Font(FONT_SIMYOU,fsize)));
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+					 if(baseInfoCompareResult.get("commuFlow").equals("N/A")){
+						 para = new Paragraph(new Chunk("N/A",new Font(FONT_SIMYOU,fsize)));
+					 }else{
+						 para = new Paragraph(new Chunk("基础数据 "+baseInfoCompareResult.get("commuFlow")+" 竞品数据",new Font(FONT_SIMYOU,fsize)));
+					 }
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+					 
+					 para = new Paragraph(new Chunk("3 ) ip数",new Font(FONT_SIMYOU,fsize)));
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+					 if(baseInfoCompareResult.get("ipNum").equals("N/A")){
+						 para = new Paragraph(new Chunk("N/A",new Font(FONT_SIMYOU,fsize)));
+					 }else{
+						 para = new Paragraph(new Chunk("基础数据 "+baseInfoCompareResult.get("ipNum")+" 竞品数据",new Font(FONT_SIMYOU,fsize)));
+					 }
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+					 
+					 para = new Paragraph(new Chunk("4 ) 链路个数",new Font(FONT_SIMYOU,fsize)));
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+					 if(baseInfoCompareResult.get("linkNum").equals("N/A")){
+						 para = new Paragraph(new Chunk("N/A",new Font(FONT_SIMYOU,fsize)));
+					 }else{
+						 para = new Paragraph(new Chunk("基础数据 "+baseInfoCompareResult.get("linkNum")+" 竞品数据",new Font(FONT_SIMYOU,fsize)));
+					 }
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+					 
+					 para = new Paragraph(new Chunk("5 ) 链路效率",new Font(FONT_SIMYOU,fsize)));
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+					 if(baseInfoCompareResult.get("frequRebuild").equals("N/A")){
+						 para = new Paragraph(new Chunk("N/A",new Font(FONT_SIMYOU,fsize)));
+					 }else{
+						 para = new Paragraph(new Chunk("基础数据 "+baseInfoCompareResult.get("frequRebuild")+" 频繁拆建链情况",new Font(FONT_SIMYOU,fsize)));
+					 }
+					 para.setIndentationLeft(85f);
+					 doc.add(para);
+			}
+			
+			 if(baseInfoCompareList!=null&&baseInfoCompareList.size()>1){//'基本信息比较'表格
+				 	renderBaseInfoCompareTable(doc,baseInfoCompareList);
+			 }
+			//*******************************************基本信息比较结束*******************************************
+			//然后是2个pcap文件各自的"明细信息"的绘制
+			for(int i=0;i<2;i++){
+				        doc.newPage();
+						String pcapFileName=pcapFileNames[i];//显示当前pcap测试文件的name
+						Paragraph paragraph = new Paragraph();
+						paragraph.setAlignment(Element.ALIGN_CENTER);
+						paragraph.add(new Phrase(new Chunk(pcapFileName,new Font(FONT_SIMYOU,20f))));
+						doc.add(paragraph);
+						
+						paragraph=new Paragraph();
+						paragraph.add(new Phrase(new Chunk("明细数据:",new Font(FONT_SIMYOU, 16f))));
+						doc.add(paragraph);
+						doc.add(new Chunk("\n\n"));
+						
+						renderBaseInfoTable(doc, dataListList.get(i));//绘制“基本信息”表格
+						renderRebuildInfoMsg(doc, rebuildInfosList.get(i), errorImg);//绘制"频繁拆建链"信息
+					    renderPopularInfoTable(doc,dataList1List.get(i));//绘制"通用信息"表格
+						renderDetailsInfoTable(doc,dataList2List.get(i));//绘制"详细信息"表格
+						renderInvalidIPTable(doc,dataList3List.get(i));//绘制"无效IP"表格
+			}
+			
+			//图表(图片)添加
+			addEchartsImg(subNameList, tupian, doc);
+			
+			doc.close();
+			totalPage = writer.getPageNumber();
+			
+			OutputStream outputStream = new FileOutputStream(tempPDFPath);
+	
+			List<ByteArrayOutputStream> list = new ArrayList<ByteArrayOutputStream>();
+			list.add(tempBaos);
+			list.add(detaialBaos);
+	
+			mergePdfFiles(list,outputStream);
+	
+			addShYin(tempPDFPath, Svalue, finalPdfPath,request);//加入水印信息
+	
+			File file = new File(tempPDFPath);
+			file.delete();
+			
+			return finalPdfPath;
+	}
+	
+	
+
+	private void renderBaseInfoCompareTable(Document doc, List<List<String>> baseInfoCompareList) throws DocumentException, IOException {
+				renderSimple2DimensionTable(doc, baseInfoCompareList);
+	}
+
+
+	private void addEchartsImg(ArrayList<ArrayList<String>> subNameList,String echartsFolderPath,Document doc) throws MalformedURLException, IOException, DocumentException {//写入4个图表图片
+			File echartImgFolder = new File(echartsFolderPath);
+			System.out.println("图表图片路径------" + echartsFolderPath);
+			File[] files = echartImgFolder.listFiles();//四个图表的图片
+			if (files != null) {//设置四种图表
+					Image imageaipFlow_a =null;
+					Image imageaipFlow_b =null;
+					Image imagebpacketLen_a =null;
+					Image imagebpacketLen_b =null;
+					Image imagecuse= null;
+					Image imagezlink_a =null;
+					Image imagezlink_b =null;
+					
+					
+					if(subNameList.size()==4){//绘制4张图片
+							 imageaipFlow_a =getImageByConditionInTheFolder(subNameList.get(0), echartImgFolder);
+							 imagebpacketLen_a =getImageByConditionInTheFolder(subNameList.get(1), echartImgFolder);
+							 imagecuse = getImageByConditionInTheFolder(subNameList.get(2), echartImgFolder);
+							 imagezlink_a =getImageByConditionInTheFolder(subNameList.get(3), echartImgFolder);
+					}else{//视频比较(绘制7张图片)
+							 imageaipFlow_a =getImageByConditionInTheFolder(subNameList.get(0), echartImgFolder);
+							 imageaipFlow_b =getImageByConditionInTheFolder(subNameList.get(1), echartImgFolder);
+							
+							 imagebpacketLen_a =getImageByConditionInTheFolder(subNameList.get(2), echartImgFolder);
+							 imagebpacketLen_b =getImageByConditionInTheFolder(subNameList.get(3), echartImgFolder);
+							
+							 imagecuse = getImageByConditionInTheFolder(subNameList.get(4), echartImgFolder);
+							
+							 imagezlink_a =getImageByConditionInTheFolder(subNameList.get(5), echartImgFolder);
+							 imagezlink_b =getImageByConditionInTheFolder(subNameList.get(6), echartImgFolder);
+					}
+					
+					
+					if(subNameList.size()==4){//绘制4张图表图片
+							if (imageaipFlow_a != null) {
+									doc.newPage();
+									doc.add(new Chunk("图表展示:", new Font( FONT_SIMYOU, 16f)));
+									doc.add(new Chunk("\n\n\n"));
+									
+									doc.add(new Chunk("IP流量分布图", new Font(FONT_SIMYOU, 14f)));
+									doc.add(imageaipFlow_a);
+							}
+							if (imagebpacketLen_a != null) {
+									doc.newPage();
+									doc.add(new Chunk("包长分布图", new Font(FONT_SIMYOU, 14f)));
+									doc.add(imagebpacketLen_a);
+							}
+							if (imagecuse != null) {
+									doc.newPage();
+									doc.add(new Chunk("吞吐曲线图", new Font(FONT_SIMYOU, 14f)));
+									doc.add(imagecuse);
+							}
+							if (imagezlink_a != null) {
+									doc.newPage();
+									doc.add(new Chunk("链路图", new Font(FONT_SIMYOU, 14f)));
+									//imagezlink_a.scalePercent(50f);
+									doc.add(imagezlink_a);
+							}
+					}else{//绘制7张图表图片(分左右展示)
+							if (imageaipFlow_a != null) {
+									doc.newPage();
+									doc.add(new Chunk("图表展示:", new Font( FONT_SIMYOU, 16f)));
+									doc.add(new Chunk("\n\n\n"));
+									
+									doc.add(new Chunk("IP流量分布图", new Font(FONT_SIMYOU, 14f)));
+									
+									Paragraph paragraph = new Paragraph();
+									
+									Table table = new Table(2, 1);
+									table.setPadding(2);
+									table.setSpacing(4);
+									table.setWidth(100f);
+									table.setBorderWidth(0);
+									
+									Cell cell1 = new Cell(imageaipFlow_a);
+									Cell cell2 = new Cell(imageaipFlow_b);
+									
+									table.addCell(cell1);
+									table.addCell(cell2);
+									
+									paragraph.add(table);
+									
+									doc.add(paragraph);
+							}
+							if (imagebpacketLen_a != null) {
+									doc.newPage();
+									doc.add(new Chunk("包长分布图", new Font(FONT_SIMYOU, 14f)));
+									
+									Paragraph paragraph = new Paragraph();
+									
+									Table table = new Table(2, 1);
+									table.setPadding(2);
+									table.setSpacing(4);
+									table.setWidth(100f);
+									table.setBorderWidth(0);
+									
+									Cell cell1 = new Cell(imagebpacketLen_a);
+									Cell cell2 = new Cell(imagebpacketLen_b);
+									
+									table.addCell(cell1);
+									table.addCell(cell2);
+									
+									paragraph.add(table);
+									
+									doc.add(paragraph);
+							}
+							if (imagecuse != null) {
+									doc.newPage();
+									doc.add(new Chunk("吞吐曲线图", new Font(FONT_SIMYOU, 14f)));
+									doc.add(imagecuse);
+							}
+							if (imagezlink_a != null) {
+									doc.newPage();
+									doc.add(new Chunk("链路图", new Font(FONT_SIMYOU, 14f)));
+									doc.add(new Chunk("\n"));
+									
+									//imagezlink_a.scalePercent(50f);
+									doc.add(imagezlink_a);
+									doc.add(new Chunk("\n"));
+									
+									if (imagezlink_b != null) {
+										    //imagezlink_b.scalePercent(50f);
+											doc.add(imagezlink_b);
+									}
+							}
+					}
+			}
+	}
+	
+	
+	
+	 public static void mergePdfFiles(String[] fileNames, String savepath)  {  
+	        try  {  
+	            Document document = new Document(new PdfReader(fileNames[0]).getPageSize(1));  
+	            PdfCopy copy = new PdfCopy(document, new FileOutputStream(savepath));  
+	            document.open();  
+	            for(int i=0; i<fileNames.length; i++) {  
+	            	String filePath = fileNames[i];
+	            	if(filePath==null||filePath.length()==0){
+	            		break;
+	            	}
+	                PdfReader reader = new PdfReader(filePath);  
+	                int n = reader.getNumberOfPages();  
+	                for(int j=1; j<=n; j++)  {  
+	                    document.newPage();   
+	                    PdfImportedPage page = copy.getImportedPage(reader, j);  
+	                    copy.addPage(page);  
+	                }  
+	            }  
+	            document.close();  
+	            
+	            
+	            
+	            
+	            for(int i=0; i<fileNames.length; i++) {  
+	            	String filePath = fileNames[i];
+	            	if(filePath==null||filePath.length()==0){
+	            		break;
+	            	}
+	                File file = new File(filePath);
+	            	if(file.exists()){
+	            		file.delete();
+	            	}
+	            }  
+	        } catch (IOException e) {  
+	            e.printStackTrace();  
+	        } catch(DocumentException e) {  
+	            e.printStackTrace();  
+	        }  
+	    }  
+
+	
+	 public static  void pdf2disk(int cellNum) throws FileNotFoundException, DocumentException{
+			Document doc = new Document();
+			
+			String[] piecePdfPaths=new String[3000];
+			int count=0;
+			String currPiecePdfName="";
+		
+			piecePdfPaths[count]="D://base.pdf";
+			count++;
+			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(new File("D://base.pdf")));
+			doc.open();
+			Table table = new Table(1);
+			for(int i=0;i<cellNum;i++){//50万个同时装入内存太大了，将每5000个写入一个文件到磁盘，最后合并这些文件
+				Cell cell = new Cell();
+				cell.add(new Chunk(UUID.randomUUID().toString()));
+				table.addCell(cell);
+				if(i%5000==0){
+					System.out.println(i);
+					doc.add(table);
+					doc.close();
+					
+					
+					doc=new Document();
+					currPiecePdfName="D://piece_"+i+".pdf";
+					piecePdfPaths[count]=currPiecePdfName;
+					count++;
+					writer = PdfWriter.getInstance(doc, new FileOutputStream(new File(currPiecePdfName)));
+					doc.open();
+					table = new Table(1);
+				}
+			}
+			doc.add(table);
+			doc.close();
+			
+			mergePdfFiles(piecePdfPaths, "D://combined_"+System.currentTimeMillis()+"_combindPiece.pdf");
+	 }
+	 
+	 
+	 public static  void pdf2memory(int cellNum) throws FileNotFoundException, DocumentException{
+			Document doc = new Document();
+			PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(new File("D://combined_"+System.currentTimeMillis()+"_memory.pdf")));
+			doc.open();
+			Table table = new Table(1);
+			for(int i=0;i<cellNum;i++){
+				Cell cell = new Cell();
+				cell.add(new Chunk(UUID.randomUUID().toString()));
+				table.addCell(cell);
+				if(i%5000==0){
+					System.out.println(i);
+				}
+			}
+			doc.add(table);
+			doc.close();
+	 }
+	 
+	
+	
+	
+	/**
+	 * 
+	 * @param conditionSubStrArr:文件名需要包含的子字符串，用于取出文件名的文件
+	 * @param echartsFolderPath
+	 * @return
+	 * @throws BadElementException
+	 * @throws MalformedURLException
+	 * @throws IOException
+	 */
+	private Image getImageByConditionInTheFolder(List<String> conditionSubStrArr, File  imgFolder) throws BadElementException, MalformedURLException, IOException {
+			File[] imgFiles = imgFolder.listFiles();
+			Image image=null;
+			if (imgFiles != null) {
+					for (int i = 0; i < imgFiles.length; i++) {
+							String imgName =imgFiles[i].getAbsolutePath();
+							boolean flag=true;
+							
+						    for (String subName: conditionSubStrArr) {
+								  if(!imgName.contains(subName)){
+									  flag=false;
+									  break;
+								  }
+							}
+						    
+							if (flag) {
+									long l = imgFiles[i].length();
+									image = Image.getInstance(imgName);
+									image.scaleToFit(1000f, 1000f);
+									/*if(l > 90000){
+										image.scalePercent(30f);
+										image.scaleAbsolute(485, 383);
+									}else{*/
+										image.scalePercent(69f);
+								/*	}*/
+									image.setAlignment(Element.ALIGN_CENTER);
+									imgFiles[i].delete();
+									break;
+							} 
+					}
+			}
+			return image;
+	}
+
+	private void setHeaderAndFooter(String headerImgPath,String footerImgPath,Document detailDoc) throws BadElementException, MalformedURLException, IOException {//设置页眉页脚
+				// 页眉页脚图片
+				Image headerImage = Image.getInstance(headerImgPath);//局部
+				headerImage.scalePercent(70f);
+				Chunk chunk = new Chunk(headerImage, -330, 0);//局部
+				Image headerImage2 = Image.getInstance(footerImgPath);
+				headerImage2.scalePercent(70f);
+				Chunk chunk2 = new Chunk(headerImage2, 300, 0);
+				// 页眉
+				HeaderFooter header = new HeaderFooter(new Phrase(chunk), false);
+
+				// 设置是否有边框等
+				// header.setBorder(Rectangle.NO_BORDER);
+				header.setBorder(Rectangle.BOTTOM);
+				header.setAlignment(1);
+				header.setBorderColor(Color.black);
+
+				// 页脚
+				HeaderFooter footer = new HeaderFooter(new Phrase(""), new Phrase(chunk2));
+				/**
+				 * 
+				 * 0是靠左 1是居中 2是居右
+				 */
+				footer.setAlignment(1);
+				footer.setBorderColor(Color.white);
+				footer.setBorder(Rectangle.BOTTOM);
+
+				detailDoc.setHeader(header);
+				detailDoc.setFooter(footer);
+				detailDoc.open();
+				// "C:/WINDOWS/Fonts/SIMSUN.TTC,1"
+	}
+
+	// 表格
+	public static void genOtherTable(HttpServletRequest request, List<List<String>> dataList,
+			HttpServletResponse response, List<List<String>> dataList1, List<List<String>> dataList2, Document doc)
+			throws Exception {
+		/*
+		 * String webpath=request.getRealPath("/"); String
+		 * fonts=webpath+"Fonts\\SIMSUN.TTC,1";
+		 */
+		// 创建一个表格
+		Table table = new Table(dataList.get(0).size());
+		table.setPadding(2f);
+		for (int i = 0; i < dataList.size(); i++) {
+			for (int j = 0; j < dataList.get(i).size(); j++) {
+				Paragraph phrase = new Paragraph(dataList.get(i).get(j).toString(), ChineseFont());
+				phrase.setAlignment(1);
+				phrase.setAlignment(Element.ALIGN_CENTER);
+				Cell cell2 = new Cell(phrase);
+				cell2.setWidth(200f);
+				if (i < 1) {
+					cell2.setBackgroundColor(new Color(161, 219, 246, 1));
+				}
+				table.addCell(cell2);
+			}
+		}
+		table.setBorderWidth(1f);
+		// table.setAbsWidth(120);
+		// 其中1为居中对齐，2为右对齐，3为左对齐
+		table.setAlignment(3);
+		doc.add(table);
+		doc.add(new Phrase());
+		doc.add(new Phrase());
+		doc.add(new Chunk("\n\n"));
+		doc.add(new Chunk("详细信息:", new Font(FONT_SIMYOU, 14f)));
+		/**
+		 * 详细信息前8条6行八列;
+		 */
+		if (dataList1 != null) {
+			Table table1 = new Table(8);
+			table1.setPadding(2f);
+			// 查看dataList1中的数量;
+			for (int i = 0; i < dataList1.size(); i++) {
+				for (int j = 0; j < 8; j++) {
+					if (dataList1.get(i).size() > j) {
+						Cell cell2 = new Cell(new Phrase(dataList1.get(i).get(j).toString(), ChineseFont()));
+						System.out.println(dataList1.get(i).get(j).toString());
+
+						if (i < 1) {
+							cell2.setBackgroundColor(new Color(161, 219, 246, 1));
+						}
+
+						table1.addCell(cell2);
+					}
+				}
+			}
+
+			doc.add(table1);
+			/**
+			 * 详细信息8条之后的数据 i为一共多少行 j为一共多少列
+			 */
+			int ber;
+			// 盛夏的字段;3个
+			int num = dataList1.get(0).size() % 8;
+			if (num != 0) {
+				if ((dataList1.get(0).size() - 8) % 7 != 0) {
+					int i = (dataList1.get(0).size() - 8) / 7;
+					ber = i + 1;
+				} else {
+					int i = (dataList1.get(0).size() - 8) / 7;
+					ber = i;
+				}
+			} else {
+				if ((dataList1.get(0).size() - 8) / 7 != 0) {
+					ber = 2;
+				} else {
+					ber = 1;
+				}
+			}
+			int nuber = 1;
+
+			// ss=2 建立第二组;查看 是
+			for (int z = 0; z < ber; z++) {
+				doc.add(new Phrase());
+				Table table2 = null;
+				if (z == 1) {
+					table2 = new Table(4);
+				} else if (z == 0) {
+					table2 = new Table(8);
+				}
+				table2.setPadding(2f);
+				int ss = ++nuber;
+
+				/**
+				 * 输出第一列
+				 */
+				for (int i = 0; i < dataList1.size(); i++) {
+					int s = 7;
+					if (dataList1.get(i).size() > 1) {
+						Cell cell3 = new Cell(new Phrase(dataList1.get(i).get(0).toString(), ChineseFont()));
+						System.err.println(dataList1.get(i).get(0).toString());
+						if (i < 1) {
+							cell3.setBackgroundColor(new Color(161, 219, 246, 1));
+						}
+
+						table2.addCell(cell3);
+					} else {
+						Cell cell3 = new Cell(new Phrase("", ChineseFont()));
+						if (i < 1) {
+							cell3.setBackgroundColor(new Color(161, 219, 246, 1));
+						}
+						table2.addCell(cell3);
+					}
+
+					/**
+					 * 详细信息
+					 */
+					if (z == 0) {
+						// 第一次
+						for (int j = 8; j < (ss * 8) - 1; j++) {
+							int ta = ++s;
+							if (dataList1.get(i).size() >= ta) {
+								if (dataList1.get(i).size() - j == 0) {
+									Cell cell2 = new Cell(new Phrase(null, ChineseFont()));
+									if (i < 1) {
+										cell2.setBackgroundColor(new Color(161, 219, 246, 1));
+									}
+									table2.addCell(cell2);
+								} else {
+									Cell cell2 = new Cell(
+											new Phrase(dataList1.get(i).get(j).toString(), ChineseFont()));
+									System.out.println(dataList1.get(i).get(j).toString());
+									if (i < 1) {
+										cell2.setBackgroundColor(new Color(161, 219, 246, 1));
+									}
+									table2.addCell(cell2);
+								}
+							}
+						}
+					} else if (z == 1) {
+						int s1;
+						s1 = ((z + 1) * 8 - 1);
+						for (int j = s1; j < 18; j++) {
+							if (dataList1.get(i).size() == 18) {
+								if (dataList1.get(i).size() - j == 0) {
+									Cell cell2 = new Cell(new Phrase(null, ChineseFont()));
+									table2.addCell(cell2);
+								} else {
+									Cell cell2 = new Cell(
+											new Phrase(dataList1.get(i).get(j).toString(), ChineseFont()));
+									System.err.println(dataList1.get(i).get(j).toString());
+									if (i < 1) {
+										cell2.setBackgroundColor(new Color(161, 219, 246, 1));
+									}
+									table2.addCell(cell2);
+
+								}
+							} else if (dataList1.get(i).size() < 18) {
+								if (dataList1.get(i).size() - j == 0) {
+									Cell cell2 = new Cell(new Phrase(null, ChineseFont()));
+									table2.addCell(cell2);
+								} else {
+									Cell cell2 = new Cell(
+											new Phrase(dataList1.get(i).get(j).toString(), ChineseFont()));
+									System.err.println(dataList1.get(i).get(j - 2).toString());
+									if (i < 1) {
+										cell2.setBackgroundColor(new Color(161, 219, 246, 1));
+									}
+									table2.addCell(cell2);
+
+								}
+							}
+
+						}
+					}
+
+				}
+				doc.add(table2);
+			}
+		}
+
+		doc.add(new Chunk("无效IP:", new Font(FONT_SIMYOU, 14f)));
+
+		if (dataList2 != null) {
+			Table table3 = new Table(2);
+			table3.setPadding(2f);
+			for (int i = 0; i < dataList2.size(); i++) {
+				for (int j = 1; j < dataList2.get(i).size(); j++) {
+					Cell cell3 = new Cell(new Phrase(dataList2.get(i).get(j).toString(), ChineseFont()));
+					cell3.setWidth(4f);
+					if (i < 1) {
+						cell3.setBackgroundColor(new Color(161, 219, 246, 1));
+					}
+					table3.addCell(cell3);
+				}
+			}
+			doc.add(table3);
+		}
+
+	}
+
+	/**
+	 * 字体控制;
+	 * 
+	 * @return
+	 */
+	public static Font ChineseFont() {
+
+		BaseFont baseFont = null;
+		try {
+			baseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", true);
+		} catch (DocumentException e) {
+			ActionBase.log.error(e);
+		} catch (IOException e) {
+			ActionBase.log.error(e);
+		} // bfChinese, 10, Font.BOLD
+		Font chineseFont = new Font(baseFont, 10f, 0, Color.black);
+
+		return chineseFont;
+	}
+
+	/**
+	 * 下载问题;
+	 * 
+	 * @param response
+	 * @param filePath
+	 */
+	public static void download(HttpServletResponse response, String filePath) {
+		try {
+			//String fileName = filePath.substring(filePath.lastIndexOf(File.separator) + 1);
+			File file = new File(filePath);
+			String fileName=file.getName();
+			fileName = new String(fileName.getBytes("UTF-8"), "ISO8859-1");
+			response.setContentType("application/octet-stream");
+			response.addHeader("Content-Disposition", "attachment;filename=" + fileName);
+			String len = String.valueOf(file.length());
+			response.setHeader("Content-Length", len);
+			OutputStream out = response.getOutputStream();
+			FileInputStream in = new FileInputStream(file);
+			byte[] b = new byte[1024];
+			int n;
+			while ((n = in.read(b)) != -1) {
+				out.write(b, 0, n);
+			}
+			in.close();
+			out.close();
+			file.delete();
+		} catch (FileNotFoundException e) {
+			ActionBase.log.error(e);
+		} catch (IOException e) {
+			ActionBase.log.error(e);
+		}
+	}
+
+	/**
+	 * pdf增加水印;
+	 * 
+	 * @param filePath
+	 * @param value
+	 * @throws Exception
+	 * @throws IOException
+	 */
+	public static void addShYin(String filePath_withoutshuiyin, String value, String finalFilePath, HttpServletRequest request)
+			throws Exception, IOException {
+		PdfReader pdfReader = null;
+		PdfStamper pdfStamper = null;
+		try {
+			pdfReader = new PdfReader(filePath_withoutshuiyin);
+			pdfStamper = new PdfStamper(pdfReader, new FileOutputStream(finalFilePath));
+			int total = pdfReader.getNumberOfPages() + 1;
+			Rectangle psize = pdfReader.getPageSize(1);
+
+			float width = psize.getWidth();
+			float height = psize.getHeight();
+			com.lowagie.text.pdf.PdfContentByte content;
+			PdfGState gs = new PdfGState();
+			for (int i = 1; i < total; i++) {
+				content = pdfStamper.getOverContent(i);// 在内容上方加水印
+				// content = pdfStamper.GetUnderContent(i);//在内容下方加水印
+				// 透明度
+				gs.setFillOpacity(0.1f);
+				gs.setStrokeOpacity(0.1f);
+				content.saveState();
+				// set Transparency
+				content.setGState(gs);
+				content.beginText();
+
+				content.setFontAndSize(FONT_SIMYOU, 60);
+				content.setTextMatrix(0, 0);
+				// 位置
+				content.showTextAligned(Element.ALIGN_CENTER, value, width / 2 - 50, height / 2 - 50, 55);
+				// content.SetColorFill(BaseColor.BLACK);
+				// content.SetFontAndSize(font, 8);
+				// content.ShowTextAligned(Element.ALIGN_CENTER, waterMarkName,
+				// 0, 0, 0);
+				content.endText();
+			}
+		} catch (Exception ex) {
+			throw ex;
+		} finally {
+
+			if (pdfStamper != null)
+				pdfStamper.close();
+
+			if (pdfReader != null)
+				pdfReader.close();
+		}
+
+	}
+
+	/**
+	 * 设置文本域;
+	 * 
+	 * @param fields
+	 * @param data
+	 * @throws IOException
+	 * @throws DocumentException
+	 */
+	public static void fillPdfTemplateForm(AcroFields fields, Map<String, String> data) throws IOException, DocumentException {
+		for (String key : data.keySet()) {
+			String value = data.get(key);
+			fields.setField(key, value); // 为字段赋值,注意字段名称是区分大小写的
+		}
+	}
+
+	/**
+	 * 获取数据;
+	 * 
+	 * @return
+	 */
+	private static Map<String, String> data(String value, String string, String date, String object) {//pdf模板文件最上边的版本等信息
+		Map<String, String> data = new HashMap<String, String>();
+		data.put("Text1", SysInfoConfig.VERSION);
+		data.put("Text2", object);
+		data.put("Text3", date);
+		data.put("Text4", string);
+
+//		for (int i = 0; i < string.length; i++) {
+		data.put("Text5", SysInfoConfig.BUSINESS_TYPE_01);
+//		}
+		data.put("Text6", "");
+		return data;
+	}
+
+	/**
+	 * 合并pdf流;移动互联网业务品质智能测评系统
+	 * 
+	 * @param osList
+	 * @param os
+	 */
+	public static void mergePdfFiles(List<ByteArrayOutputStream> osList, OutputStream os) {
+		try {
+			// 页码+1
+			Document document = new Document(new PdfReader(osList.get(0).toByteArray()).getPageSize(1));
+			PdfCopy pdfCopy = new PdfCopy(document, os);
+			document.open();
+			for (int i = 0; i < osList.size(); i++) {
+				PdfReader reader = new PdfReader(osList.get(i).toByteArray());
+				// 当前页
+				int n = reader.getNumberOfPages();
+				for (int j = 1; j <= n; j++) {
+					document.newPage();
+					PdfImportedPage page = pdfCopy.getImportedPage(reader, j);
+					pdfCopy.addPage(page);
+					System.out.println(pdfCopy.getPageNumber());
+				}
+			}
+			document.close();
+		} catch (IOException e) {
+			ActionBase.log.error(e);
+		} catch (DocumentException e) {
+			ActionBase.log.error(e);
+		}
+	}
+	
+	
+	
+
+	/**
+	 * 创建当前时间;
+	 * 
+	 * @return
+	 */
+	private static String createDate() {
+		long l = System.currentTimeMillis();
+		// new日期对象
+		Date date = new Date(l);
+		// 转换提日期输出格式
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		return dateFormat.format(date);
+	}
+
+	// 表格(非"比较"时走该方法，绘制表单table)
+	public void newgenOtherTable(HttpServletRequest request,
+							List<List<String>> dataList,//baseInfoTable
+							HttpServletResponse response, 
+							List<List<String>> dataList1, // popularInfoTable
+							List<List<String>> dataList2, //detailsInfoTable
+							Document doc, 
+							String imgPath, //errorImg
+							List<List<String>> dataList3, //detailsInfoOthers
+							List<RebuildInfo> rebuildInfos, 
+							List<String> kindInfo, 
+							List<String> timeToFirst, 
+							List<List<String>> timeToFirstTible) throws Exception {
+		
+			Paragraph paragraph = new Paragraph();
+			
+			paragraph.add(new Phrase(new Chunk("明细数据:",new Font(FONT_SIMYOU, 16f))));
+			doc.add(paragraph);
+			doc.add(new Chunk("\n\n"));
+			
+			renderBaseInfoTable(doc, dataList);//绘制“基本信息”表格
+			renderRebuildInfoMsg(doc, rebuildInfos, imgPath);//绘制"频繁拆建链"信息
+		    renderPopularInfoTable(doc,dataList1);//绘制"通用信息"表格
+			renderDetailsInfoTable(doc,dataList2);//绘制"详细信息"表格
+			renderInvalidIPTable(doc,dataList3);//绘制"无效IP"表格
+	}
+
+	private void renderInvalidIPTable(Document doc, List<List<String>> dataList) throws DocumentException, IOException {//绘制"无效IP"表格
+			if(dataList==null||dataList.size()==0){
+					return;
+			}
+			
+			int fsize_title=10;
+			int fsize_data=9;
+			doc.add(new Chunk("\n"));
+			
+			Table table= new Table(2);
+			table.setPadding(2f);
+			Cell cell2 = new Cell();
+			
+			cell2.add(new Chunk("无效ip",new Font(FONT_SIMYOU,fsize_title,Font.NORMAL, Color.black)));
+			
+			table.addCell(cell2);
+			
+			Cell cell3 = new Cell();
+			
+			if (dataList.get(1).get(1) != null && !dataList.get(1).get(1).equals("")) {
+					cell3.add(new Chunk(dataList.get(1).get(1),new Font(FONT_SIMYOU,fsize_data,Font.NORMAL, Color.black)));
+			} else {
+					cell3.add(new Chunk("无",new Font(FONT_SIMYOU,fsize_data,Font.NORMAL, Color.black)));
+			}
+			
+			table.addCell(cell3);
+			table.setBorderWidth(1f);
+			table.setAlignment(Element.ALIGN_CENTER);
+			doc.add(table);
+	}
+
+	private void renderDetailsInfoTable(Document doc,List<List<String>> dataList) throws DocumentException {
+		//搞一个记录延时顺序的集合serviceIp顺序
+		//显示顺序要和dataList一直
+			//重行组织详细dataList
+		
+			Color bgcolor_title = new Color(161, 219, 246, 1);
+			int colNum_serviceIp=-1;
+			int colNum_dnsTimeDelay=-1;
+			int colNum_ipAddr=-1;
+			int colNum_oftenRebuild = 0;//"频繁拆建链"列号
+			
+			int fsize_title=9;
+			int fsize_data=9;
+			
+			
+			 ArrayList<String> uniqueServiceIpList = new ArrayList<String>();//按原始顺序唯一的保存了serviceIp
+			
+			HashMap<String,LinkedList<Integer>> map = new HashMap<String,LinkedList<Integer>>();//key=serviceIp,value=dataList的row List
+			for(int rowNum=1;rowNum<dataList.size();rowNum++){//serviceIp字段必传(且是第一个)
+				   String serviceIp = dataList.get(rowNum).get(0);
+				   LinkedList<Integer> rowNumList =map.get(serviceIp);
+				   if(rowNumList==null){
+					    rowNumList=new LinkedList<Integer>();
+					    map.put(serviceIp, rowNumList);
+					    
+					    uniqueServiceIpList.add(serviceIp);
+				   }
+				   rowNumList.add(rowNum);
+			}
+		
+			doc.add(new Chunk("详细信息:", new Font(FONT_SIMYOU, 14f)));
+			
+			int colSize=dataList.get(0).size();
+			int preColSize=colSize;
+			if(preColSize>9){
+				preColSize=9;
+			}
+			
+			for(int colNum=0;colNum<colSize;colNum++){
+				      String currTitle=dataList.get(0).get(colNum);
+					  if("server IP".equals(currTitle)){
+						      colNum_serviceIp=colNum;
+						      continue;
+					  }else if("DNS时延(ms)".equals(currTitle)){
+						  	   colNum_dnsTimeDelay=colNum;
+						  	   continue;
+					  }else if ("服务器IP归属".equals(currTitle)) {
+						  	   colNum_ipAddr=colNum;
+						  	   continue;
+					  }else if("串行链路频繁拆建链判断(0~2s)".equals(currTitle)){
+						  		colNum_oftenRebuild=colNum;
+					  }
+			}
+			//最多显示9列(serviceIp,dns时延，IP归属地的rowspan=同一个serviceIp的个数)
+			Table table_preCols = new Table(preColSize);
+			table_preCols.setPadding(2f);
+			table_preCols.setBorderWidth(1f);
+			
+			for(int colNum=0;colNum<preColSize;colNum++){//前9列的标题
+					String title=dataList.get(0).get(colNum);
+					if(title==null){
+						title="";
+					}
+					Cell cell = new Cell(new Chunk(title,new Font(FONT_SIMYOU,10)));
+					cell.setBackgroundColor(bgcolor_title);		
+					table_preCols.addCell(cell);
+			}
+			
+			for (String serviceIp: uniqueServiceIpList) { //处理当前serviceIp对应的dataList的前preColSize个列
+				   LinkedList<Integer> rowNumList = map.get(serviceIp);
+				   int rowspan=rowNumList.size();
+				   
+				   int firstRowNum=rowNumList.get(0);
+				   for(int colNum=0;colNum<preColSize;colNum++){//前9列的第一行(因为要单独设置rowspan)
+					        String data=dataList.get(firstRowNum).get(colNum);
+					        if(data==null){
+					        	data="";
+							}
+					        Cell cell = new Cell(new Chunk(data,new Font(FONT_SIMYOU,10)));
+			        	    if(colNum==colNum_serviceIp||colNum==colNum_dnsTimeDelay||colNum==colNum_ipAddr){
+			 				    	cell.setRowspan(rowspan);
+			        	    }
+			        	    table_preCols.addCell(cell);
+				   }
+				   
+				   for (int  i=1;i<rowNumList.size();i++  ) {//前9列的剩余row
+					   		int rowNum=rowNumList.get(i);
+					        for(int colNum=0;colNum<preColSize;colNum++){
+					        	   if(colNum!=colNum_serviceIp&&colNum!=colNum_dnsTimeDelay&&colNum!=colNum_ipAddr){
+					        		   String data=dataList.get(rowNum).get(colNum);
+					        		   if(data==null){
+						   					data="";
+						   			   }
+								        Cell cell = new Cell(new Chunk(data,new Font(FONT_SIMYOU,10)));
+						        	    table_preCols.addCell(cell);
+					        	   }
+					        }
+				   }
+			}
+			doc.add(table_preCols);
+			doc.add(new Chunk("\n\n"));
+			
+			if(colSize>9){//最麻烦
+					Table table_postCols = new Table(colSize-preColSize);
+					table_postCols.setPadding(2f);
+					table_postCols.setBorderWidth(1f);
+					
+					for(int colNum=preColSize;colNum<colSize;colNum++){//后9列的标题
+							String title=dataList.get(0).get(colNum);
+							if(title==null){
+								title="";
+							}
+							  Cell cell = new Cell(new Chunk(title,new Font(FONT_SIMYOU,10)));
+							  cell.setBackgroundColor(bgcolor_title);
+							  table_postCols.addCell(cell);
+					}
+				
+					for (String serviceIp: uniqueServiceIpList) { //后9列的数据列
+						   LinkedList<Integer> rowNumList = map.get(serviceIp);
+						   int rowspan=rowNumList.size();
+						   
+						   int firstRowNum=rowNumList.get(0);
+						   for(int colNum=preColSize;colNum<colSize;colNum++){//后9列的第一行(要设置rowspan)
+							        String data=dataList.get(firstRowNum).get(colNum);
+							        if(data==null){
+							        		data="";
+									}
+								    Cell cell = new Cell(new Chunk(data,new Font(FONT_SIMYOU,10)));
+					        	    if(colNum==colNum_serviceIp||colNum==colNum_dnsTimeDelay||colNum==colNum_ipAddr){
+					 				    	cell.setRowspan(rowspan);
+					        	    }
+					        	    table_postCols.addCell(cell);
+						   }
+						   
+						   for (int  i=1;i<rowNumList.size();i++  ) {//后9列的剩余行
+							   		int rowNum=rowNumList.get(i);
+							        for(int colNum=preColSize;colNum<colSize;colNum++){
+							        	   if(colNum!=colNum_serviceIp&&colNum!=colNum_dnsTimeDelay&&colNum!=colNum_ipAddr){
+							        		   String data=dataList.get(rowNum).get(colNum);
+							        		   if(data==null){
+								   					data="";
+								   			   }
+							        		   Cell cell = new Cell(new Chunk(data,new Font(FONT_SIMYOU,10)));
+							        		   table_postCols.addCell(cell);
+							        	   }
+							        }
+						   }
+					}
+					doc.add(table_postCols);
+					doc.add(new Chunk("\n\n"));
+			}	
+	}
+
+	//可以作为通用的绘制简单二维表格方法
+	private void renderPopularInfoTable(Document doc, List<List<String>> dataList) throws DocumentException, IOException {//绘制"通用信息"表格
+			doc.add(new Chunk("通用信息", new Font(FONT_SIMYOU, 14f)));
+			renderSimple2DimensionTable(doc, dataList);
+			doc.add(new Chunk("\n"));
+	}
+	
+	
+	//绘制二维表格
+	private void renderSimple2DimensionTable(Document doc, List<List<String>> dataList) throws DocumentException, IOException{
+					Font font = new Font(FONT_SIMYOU,9,Font.NORMAL, Color.black);
+					Color bgcolor_title = new Color(161, 219, 246, 1);
+					Table table= new Table(dataList.get(0).size());//列数
+					// 创建一个表格
+				   table.setPadding(2f);
+					for (int i = 0; i < dataList.size(); i++) {
+						for (int j = 0; j < dataList.get(i).size(); j++) {
+							 Cell cell = new Cell(new Chunk(dataList.get(i).get(j).toString(),font));
+							if (i==0) {
+								cell.setBackgroundColor(bgcolor_title);
+							}
+							table.addCell(cell);
+						}
+					}
+					table.setBorderWidth(1f);
+					doc.add(table);
+	}
+
+	
+	
+	
+	//绘制二维表格
+		/*private void renderSimple2DimensionTable_pdfTable(Document doc, List<List<String>> dataList) throws DocumentException, IOException{
+						// 创建一个表格
+						PdfPTable table = new PdfPTable(dataList.get(0).size());
+						
+						
+						for (int i = 0; i < dataList.size(); i++) {
+							for (int j = 0; j < dataList.get(i).size(); j++) {
+								List<Chunk> chunks = getChunkList(dataList.get(i).get(j).toString(), bfChinese,Color.black);
+								PdfPCell cell = new PdfPCell();
+								cell.setPaddingBottom(5f);
+								cell.setPaddingTop(5f);
+								cell.setMinimumHeight(20f);
+								
+								for (Chunk chunk : chunks) {
+									 cell.addElement(chunk);
+								}
+								if (i==0) {
+									cell.setBackgroundColor(new Color(161, 219, 246, 1));
+								}
+								table.addCell(cell);
+							}
+						}
+						doc.add(table);
+						doc.add(new Chunk("\n\n"));
+		}
+*/
+	
+	
+	private void renderTtFComment(Document doc,String TtFS1,String TtFS2,String TfFR1,String TtFR2,String fileName1,String fileName2) throws DocumentException {//绘制绘制"TtFS"和"TtFR"表格下面的说明
+			Color color = new Color(165, 42, 42);
+			Font font = new Font(FONT_SIMYOU, 10f);
+			font.setColor(color);
+		
+			Paragraph paragraph = new Paragraph();
+			paragraph.setIndentationLeft(90f);//80f
+			
+			String msg_ttfs=null;
+			String msg_ttfr=null;
+			
+			Table table = new Table(1);//默认是在paragraph中居中显示的
+			table.setAlignment(Element.ALIGN_LEFT);
+			table.setBorderWidth(0f);
+			
+			if(TtFS1==null||TtFS1.equals("N/A")||TtFS2==null||TtFS2.equals("N/A")){
+				msg_ttfs="TtFS相差百分比: N/A;";
+			}
+			if(TfFR1==null||TfFR1.equals("N/A")||TtFR2==null||TtFR2.equals("N/A")){
+				msg_ttfr="TtFR相差百分比: N/A;";
+			}
+			
+			if(msg_ttfs==null){
+					float TtFS1_f = Float.parseFloat(TtFS1);
+					float TtFS2_f = Float.parseFloat(TtFS2);
+					if(TtFS1_f<TtFS2_f){
+						msg_ttfs="TtFS相差百分比: "+fileName1+"比"+fileName2+"高效,时间相差百分比: "+new BigDecimal(TtFS1_f*100).divide(new BigDecimal(TtFS2_f), 2, RoundingMode.HALF_UP).toString()+"%;";
+					}else{
+						msg_ttfs="TtFS相差百分比: "+fileName2+"比"+fileName1+"高效,时间相差百分比: "+new BigDecimal(TtFS2_f*100).divide(new BigDecimal(TtFS1_f), 2, RoundingMode.HALF_UP).toString()+"%;";
+					}
+			}
+			
+			if(msg_ttfr==null){
+					float TtFR1_f = Float.parseFloat(TfFR1);
+					float TtFR2_f = Float.parseFloat(TtFR2);
+					if(TtFR1_f<TtFR2_f){
+						msg_ttfr="TtFR相差百分比: "+fileName1+"比"+fileName2+"高效,时间相差百分比: "+new BigDecimal(TtFR1_f*100).divide(new BigDecimal(TtFR2_f), 2, RoundingMode.HALF_UP).toString()+"%";
+					}else{
+						msg_ttfr="TtFR相差百分比: "+fileName2+"比"+fileName1+"高效,时间相差百分比: "+new BigDecimal(TtFR2_f*100).divide(new BigDecimal(TtFR1_f), 2, RoundingMode.HALF_UP).toString()+"%";
+					}
+			}
+			 
+			 Cell cell = new Cell(new Chunk(msg_ttfs,new Font(FONT_SIMYOU,10,Font.NORMAL, color)));
+			 cell.setBorderWidth(0f);
+			 table.addCell(cell);
+			
+			 cell = new Cell(new Chunk(msg_ttfr,new Font(FONT_SIMYOU,10,Font.NORMAL, color)));
+			 cell.setBorderWidth(0f);
+			 table.addCell(cell);
+			 
+			 cell = new Cell(new Chunk("TtFS：建立连接后，客户端发送第一个请求的时间，时间越短越高效;",new Font(FONT_SIMYOU,10,Font.NORMAL, color)));
+			 cell.setBorderWidth(0f);
+			 table.addCell(cell);
+			
+			 cell = new Cell(new Chunk("TtFR：客户端发送请求后，服务器响应时间，时间越短越高效;",new Font(FONT_SIMYOU,10,Font.NORMAL, color)));
+			 cell.setBorderWidth(0f);
+			 table.addCell(cell);
+			 paragraph.add(table);
+			
+			 doc.add(paragraph);
+	}
+	
+
+	private void renderTtFTable(Document doc,List<List<String>> timeToFirstTible) throws DocumentException, IOException {//绘制"TtFS"和"TtFR"的表格
+			renderSimple2DimensionTable(doc, timeToFirstTible);
+	}
+
+	private void renderTtFMsg(Document doc,String isGood, String imgPath,String ttFMsg,int ttfsOrTtfr) throws MalformedURLException, IOException, DocumentException {////绘制"TtFR"信息
+			File mFile;
+			if (isGood.equals("true")) {
+				mFile = new File(imgPath + "avgT"+ttfsOrTtfr+"T.jpg");
+			} else {
+				mFile = new File(imgPath + "avgT"+ttfsOrTtfr+"F.jpg");
+			}
+			String imgName = (mFile.getAbsolutePath());
+			// 图片长度
+			Image image = Image.getInstance(imgName);
+			image.scaleToFit(1000f, 1000f);
+			image.scalePercent(69f);
+			image.setAlignment(Element.ALIGN_LEFT);
+			image.setIndentationLeft(80f);
+			doc.add(image);
+			
+			Paragraph paragraph = new Paragraph();
+			paragraph.setIndentationLeft(80f);
+			paragraph.add(new Phrase(new Chunk(ttFMsg, new Font(FONT_SIMYOU, 10f))));
+			doc.add(paragraph);
+	}
+	
+	/**
+	 * 用于"视频比较"时，要显示测试业务的名称(之前是图片，写死了"本次测试业务")
+	 */
+/*		private void renderTtFMsgByPcapFileName(Document doc,String isGood, String imgPath,BaseFont bfChinese,String ttFMsg,int ttfsOrTtfr,String pcapFileName) throws MalformedURLException, IOException, DocumentException {////绘制"TtFR"信息
+				File mFile;
+				if (isGood.equals("true")) {
+					mFile = new File(imgPath + "dui.jpg");
+				} else {
+					mFile = new File(imgPath + "cuo.jpg");
+				}
+				
+				String imgName = (mFile.getAbsolutePath());
+				// 图片长度
+				Image image = Image.getInstance(imgName);
+				image.scalePercent(69f);
+				image.setAlignment(Element.ALIGN_RIGHT);
+		
+				String title="";
+				if(ttfsOrTtfr==0){
+					title="Time To First Send ( TtFS ):";
+				}else{
+					title="Time To First Response ( TtFR ) :";
+				}
+				
+				Paragraph paragraph = new Paragraph();
+				paragraph.setIndentationLeft(55f);			
+				
+			  	Table table = new Table(12,1);
+			  	table.setAlignment(0);
+				table.setBorderWidth(0);
+				table.setPadding(2);
+				table.setSpacing(0);
+				
+				
+				Cell cell = new Cell();
+				cell.add(image);
+				cell.setColspan(1);
+				cell.setBorderWidth(0);
+				table.addCell(cell);
+				
+				cell = new Cell();
+				cell.setColspan(11);
+				cell.setBorderWidth(0);
+				cell.add(new Chunk("测试业务",new Font(bfChinese, 15f)));
+				cell.add(new Chunk(pcapFileName,new Font(null, 15f)));
+				cell.add(new Chunk("的",new Font(bfChinese, 15f)));
+				cell.add(new Chunk(title,new Font(null, 15f)));
+				
+				
+				
+				
+				table.addCell(cell);
+					
+				paragraph.add(table);
+				doc.add(paragraph);
+				
+				paragraph = new Paragraph();
+				paragraph.setIndentationLeft(80f);
+				paragraph.add(new Phrase(new Chunk(ttFMsg, new Font(bfChinese, 10f))));
+				doc.add(paragraph);
+	}*/
+	
+	
+	
+//没有要显示"N/A"
+	private void renderKindInfoMsg(Document doc,List<String> kindInfo,String imgPath) throws MalformedURLException, IOException, DocumentException {//绘制"KindInfo"信息
+			StringBuffer kindIP = new StringBuffer();
+			File mFile = new File(imgPath + "kind.jpg");
+			String imgName = mFile.getAbsolutePath();
+			// 图片长度
+			Image image = Image.getInstance(imgName);
+			image.scaleToFit(1000f, 1000f);
+			image.scalePercent(69f);
+			
+			String msg_kindips="        N/A\n";
+			
+			if(kindInfo!=null&&kindInfo.size()>0){
+					for(int i=0; i<kindInfo.size(); i++) {
+							kindIP.append(kindInfo.get(i));
+							kindIP.append(",");
+					}
+					
+					kindIP.deleteCharAt(kindIP.length()-1);
+					kindIP.append("\n");
+					msg_kindips="        "+kindIP.toString();
+			}
+			
+			Paragraph paragraph = new Paragraph();
+			paragraph.setIndentationLeft(90f);
+			
+			Table table = new Table(1);
+			table.setBorderWidth(0f);
+			table.setAlignment(Element.ALIGN_LEFT);
+			Cell cell = new Cell(image);
+			cell.setBorderWidth(0f);
+			table.addCell(cell);
+			
+			cell=new Cell(new Chunk(msg_kindips,new Font(FONT_SIMYOU,10,Font.NORMAL, Color.black)));
+			cell.setBorderWidth(0f);
+			table.addCell(cell);
+			
+			paragraph.add(table);
+			doc.add(paragraph);
+			doc.add(new Chunk("\n"));
+	}
+
+	private void renderRebuildInfoMsg(Document doc,List<RebuildInfo> rebuildInfos,String imgPath) throws MalformedURLException, IOException, DocumentException {//渲染"频繁拆建链"信息
+			Paragraph paragraph;
+			File mFile;
+			RebuildInfo rebuildInfo = new RebuildInfo();
+			if (rebuildInfos != null && rebuildInfos.size()>0) {
+					for(int i=0; i<rebuildInfos.size(); i++) {
+							rebuildInfo = rebuildInfos.get(i);
+							mFile = new File(imgPath + "rebuild.jpg");
+							String imgName = null;
+							imgName = (mFile.getAbsolutePath());
+							// 图片长度
+							Image image = Image.getInstance(imgName);
+							image.scaleToFit(1000f, 1000f);
+							image.scalePercent(69f);
+							image.setAlignment(Element.ALIGN_LEFT);
+							image.setIndentationLeft(80f);
+							doc.add(image);
+							
+							paragraph = new Paragraph();
+							paragraph.setIndentationLeft(80f);
+							paragraph.add(new Phrase(new Chunk("IP: "+rebuildInfo.getServiceIp()+",   拆建链的数目: "+rebuildInfo.getRepeatCount()+ 
+									"个,   最短键连间隔: " + rebuildInfo.getMinLastTimeDelayed() + "ms,   平均建立时间: "+rebuildInfo.getAvgLastTimeDelayed() + "ms", new Font(FONT_SIMYOU, 10f))));
+							doc.add(paragraph);
+							doc.add(new Chunk("\n"));
+					}
+			}
+	}
+
+	private void renderBaseInfoTable(Document doc,List<List<String>> dataList) throws DocumentException, IOException {//绘制“基本信息”表格
+			doc.add(new Chunk("基本信息:", new Font(FONT_SIMYOU, 14f)));
+			renderSimple2DimensionTable(doc, dataList);
+			doc.add(new Chunk("\n"));
+	}
+	
+/*	public List<Chunk> getChunkList111(String str,Color color,int fsize){
+			char c=0;
+			ArrayList<Chunk> chunks = new ArrayList<Chunk>();
+			boolean isChinese=true;//表示当前sb的内容是汉字，
+			StringBuilder sb=new StringBuilder("");
+			for(int i=0;i<str.length();i++){
+				     c = str.charAt(i);
+				     if(CharUtil.isChinese(c)){//当前是汉字
+				    	 	if(!isChinese){//前面是英文
+				    	 		 isChinese=true;
+				    	 		 chunks.add(new Chunk(sb.toString(),new Font(null,fsize,Font.NORMAL, color)));
+						    	 sb.delete(0, sb.length());
+				    	 	}
+				    	 	sb.append(c);
+				     }else{//当前是英文
+					    	 if(isChinese){//前面是汉字
+						    		 isChinese=false;
+						    		 chunks.add(new Chunk(sb.toString(),new Font(bfChinese,fsize,Font.NORMAL, color)));
+							    	 sb.delete(0, sb.length());
+				    	 	 }
+					    	  sb.append(c);
+				     }
+			}
+		
+			if(isChinese){
+					chunks.add(new Chunk(sb.toString(),new Font(bfChinese,fsize,Font.NORMAL, color)));
+			}else{
+					chunks.add(new Chunk(sb.toString(),new Font(null,fsize,Font.NORMAL, color)));
+			}
+			return chunks;
+	}
+*/
+	
+	
+	/*public List<Phrase> getPhraseList(String str,Color color){
+		char c=0;
+		ArrayList<Phrase> phraseList = new ArrayList<Phrase>();
+		boolean isChinese=true;//表示当前sb的内容是汉字，
+		StringBuilder sb=new StringBuilder("");
+		for(int i=0;i<str.length();i++){
+			     c = str.charAt(i);
+			     if(CharUtil.isChinese(c)){//当前是汉字
+			    	 	if(!isChinese){//前面是英文
+			    	 		 isChinese=true;
+			    	 		 phraseList.add(new Phrase(sb.toString(),new Font(null,10,Font.NORMAL, color)));
+					    	 sb.delete(0, sb.length());
+			    	 	}
+			    	 	sb.append(c);
+			     }else{//当前是英文
+				    	 if(isChinese){//前面是汉字
+					    		 isChinese=false;
+					    		 phraseList.add(new Phrase(sb.toString(),new Font(bfChinese,10,Font.NORMAL, color)));
+						    	 sb.delete(0, sb.length());
+			    	 	 }
+				    	  sb.append(c);
+			     }
+		}
+	
+		if(isChinese){
+				phraseList.add(new Phrase(sb.toString(),new Font(bfChinese,10,Font.NORMAL, color)));
+		}else{
+				phraseList.add(new Phrase(sb.toString(),new Font(null,10,Font.NORMAL, color)));
+		}
+		return phraseList;
+	}*/
+
+}

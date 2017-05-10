@@ -1,0 +1,174 @@
+package com.vo;
+
+import java.util.List;
+
+/**
+ * 
+ * @description	以链路为单位，指标统计
+ */
+
+public class FileInfo {
+	
+	private String fileName;	//文件名
+	private String dnsTimeDelayedcount;	//DNS时延(ms)
+	private int tcpCount;	//总链路数(个)
+	private int packetCount;	//传输总包数(个)
+	private double exchangeFlowCount;	//传输总字节(byte)
+	private String exchangeTimeCount;	//交互时间(ms)
+	private String timeEfficiencyAVG;	//平均链路时间有效率(%)
+	private List<ServiceIP> serviceIP;	// Server IP
+	private String allKeepTimes; //总持续时间
+	private String allFileDataTimes; //总数据传输时间
+	private String maxFlowIP;//传输量最大IP及端口
+	private String maxFlowPort;	//传输量最大IP及端口
+	private String maxTCPip;	//链路最多IP
+	
+	private String avgT1;	// Time to First Send平均值
+	private String avgT2;	// Time to First Response平均值
+	//  临时静态值，将来需要获取
+//	private double avgAqyT1 = 0.73;
+//	private double avgAqyT2 = 60.53;
+//	private double avgTxT1 = 1.44;
+//	private double avgTxT2 = 51.27;
+//	private double avgMgT1 = 3.34;
+//	private double avgMgT2 = 109.29;
+
+	//当前和基本参数比较  计算结果   （0、耗时多于，1、耗时低于，2、耗时相似于）
+//	private String avgAqyT1Rs;
+//	private String avgTxT1Rs;
+//	private String avgAqyT2Rs;
+//	private String avgTxT2Rs;
+
+	private String downloadRate;	//服务器是否支持TCP相关参数配置
+	private int ipTCPCounts;	//链路最多IP(链路数)
+	private List<RebuildInfo> rebuildInfo;	// 频繁拆建链相关信息
+//	private GrathVO grath;	
+	private List<String> others;
+	
+	public List<String> getOthers() {
+		return others;
+	}
+	public void setOthers(List<String> others) {
+		this.others = others;
+	}
+	public int getIpTCPCounts() {
+		return ipTCPCounts;
+	}
+	public void setIpTCPCounts(int ipTCPCounts) {
+		this.ipTCPCounts = ipTCPCounts;
+	}
+	public String getMaxFlowIP() {
+		return maxFlowIP;
+	}
+	public void setMaxFlowIP(String maxFlowIP) {
+		this.maxFlowIP = maxFlowIP;
+	}
+	public String getMaxFlowPort() {
+		return maxFlowPort;
+	}
+	public void setMaxFlowPort(String maxFlowPort) {
+		this.maxFlowPort = maxFlowPort;
+	}
+	public String getMaxTCPip() {
+		return maxTCPip;
+	}
+	public void setMaxTCPip(String maxTCPip) {
+		this.maxTCPip = maxTCPip;
+	}
+	public String getAllKeepTimes() {
+		return allKeepTimes;
+	}
+	public void setAllKeepTimes(String allKeepTimes) {
+		this.allKeepTimes = allKeepTimes;
+	}
+	public String getAllFileDataTimes() {
+		return allFileDataTimes;
+	}
+	public void setAllFileDataTimes(String allFileDataTimes) {
+		this.allFileDataTimes = allFileDataTimes;
+	}
+	public String getDnsTimeDelayedcount() {
+		return dnsTimeDelayedcount;
+	}
+	public void setDnsTimeDelayedcount(String dnsTimeDelayedcount) {
+		this.dnsTimeDelayedcount = dnsTimeDelayedcount;
+	}
+	public int getTcpCount() {
+		return tcpCount;
+	}
+	public void setTcpCount(int tcpCount) {
+		this.tcpCount = tcpCount;
+	}
+	public int getPacketCount() {
+		return packetCount;
+	}
+	public void setPacketCount(int packetCount) {
+		this.packetCount = packetCount;
+	}
+	public double getExchangeFlowCount() {
+		return exchangeFlowCount;
+	}
+	public void setExchangeFlowCount(double exchangeFlowCount) {
+		this.exchangeFlowCount = exchangeFlowCount;
+	}
+	public String getExchangeTimeCount() {
+		return exchangeTimeCount;
+	}
+	public void setExchangeTimeCount(String exchangeTimeCount) {
+		this.exchangeTimeCount = exchangeTimeCount;
+	}
+	public String getTimeEfficiencyAVG() {
+		return timeEfficiencyAVG;
+	}
+	public void setTimeEfficiencyAVG(String timeEfficiencyAVG) {
+		this.timeEfficiencyAVG = timeEfficiencyAVG;
+	}
+	public List<ServiceIP> getServiceIP() {
+		return serviceIP;
+	}
+	public void setServiceIP(List<ServiceIP> serviceIP) {
+		this.serviceIP = serviceIP;
+	}
+	public String getFileName() {
+		return fileName;
+	}
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+	public List<RebuildInfo> getRebuildInfo() {
+		return rebuildInfo;
+	}
+	public void setRebuildInfo(List<RebuildInfo> rebuildInfos) {
+		this.rebuildInfo = rebuildInfos;
+	}
+	public void setDownloadRate(String downloadRate) {
+		this.downloadRate = downloadRate;
+	}
+	public String getDownloadRate() {
+		return downloadRate;
+	}
+	public String getavgT1() {
+		return avgT1;
+	}
+	public void setavgT1(String avgT1) {
+		this.avgT1 = avgT1;
+	}
+	public String getavgT2() {
+		return avgT2;
+	}
+	public void setavgT2(String avgT2) {
+		this.avgT2 = avgT2;
+	}
+	public String getAvgT1() {
+		return avgT1;
+	}
+	public void setAvgT1(String avgT1) {
+		this.avgT1 = avgT1;
+	}
+	public String getAvgT2() {
+		return avgT2;
+	}
+	public void setAvgT2(String avgT2) {
+		this.avgT2 = avgT2;
+	}
+}

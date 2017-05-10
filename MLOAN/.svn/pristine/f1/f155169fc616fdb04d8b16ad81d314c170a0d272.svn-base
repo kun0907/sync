@@ -1,0 +1,50 @@
+package com.vo;
+
+
+public class RebuildInfo {
+	
+	private int repeatCount;
+	private String minLastTimeDelayed;
+	private String avgLastTimeDelayed;
+	private String serviceIp;
+	private String host;
+	private String portAs;
+	public int getRepeatCount() {
+		return repeatCount;
+	}
+	public void setRepeatCount(int repeatCount) {
+		this.repeatCount = repeatCount;
+	}
+	public String getMinLastTimeDelayed() {
+		return minLastTimeDelayed;
+	}
+	public void setMinLastTimeDelayed(String minLastTimeDelayed) {
+		this.minLastTimeDelayed = minLastTimeDelayed;
+	}
+	public String getAvgLastTimeDelayed() {
+		return avgLastTimeDelayed;
+	}
+	public void setAvgLastTimeDelayed(String avgLastTimeDelayed) {
+		this.avgLastTimeDelayed = avgLastTimeDelayed;
+	}
+	
+	public String getServiceIp() {
+		return serviceIp;
+	}
+	public void setServiceIp(String serviceIp) {
+		this.serviceIp = serviceIp;
+	}
+	public String getHost() {
+		return host;
+	}
+	public void setHost(String host) {
+		this.host = host;
+	}
+	public String getPortAs() {
+		return portAs;
+	}
+	public void setPortAs(String portAs) {
+		this.portAs = portAs;
+	}
+	
+}

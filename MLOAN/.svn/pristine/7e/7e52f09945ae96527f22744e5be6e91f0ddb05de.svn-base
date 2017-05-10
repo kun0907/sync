@@ -1,0 +1,974 @@
+package com.controller;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import com.constant.RedisStorageConfig;
+import com.service.IIpAddService;
+import com.util.StringUtil;
+import com.util.base.PDFUti;
+import com.util.base.ZipUtil;
+import com.vo.FileInfo;
+import com.vo.RebuildInfo;
+import com.vo.ServiceIP;
+import com.vo.ServiceIPInfo;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import redis.clients.jedis.ShardedJedis;
+import redis.clients.jedis.ShardedJedisPool;
+/**
+ * 
+ * @author lipengfei
+ *
+ */
+@Controller
+@RequestMapping("FilePdf")
+public class FilePdf{
+	
+	private static final Logger log = Logger.getLogger(FilePdf.class);
+	
+	@Autowired
+	private ShardedJedisPool shardedJedisPool; 
+	
+	@Autowired
+	IIpAddService ipAddService;
+	
+	
+	/**未选择“视频比较”时走这个方法:one pcap,one pdf
+	 */
+	private void createPdfEachPcapEachFile(HttpServletRequest request,
+										   HttpServletResponse response,
+										   String data1,
+										   String watermarker//水印信息
+										   ) throws Exception{
+				watermarker=decodeAndSetDefaultValue(watermarker,"CMLAB-测试所-无线室","utf-8");//参数(水印)判断
+				
+				DecimalFormat df= new DecimalFormat("#");
+				List<String> filePathInZips = new ArrayList<String>();//生成多个pdf文件打包zip
+				if (StringUtil.isEmpty(data1)) {
+						log.error("生成pdf报告内容参数data1为空*****************");
+				}
+				
+				JSONObject jObj =decodeAndTransfer2JsonObj(data1,"utf-8");//代表所有前台传递的参数转换的大对象(包含几乎所有"明细数据",pdf中要生成的图表信息不是数据而是截取的页面现成的图片)
+				List<FileInfo> fileInfoList = generateFileInfoList(jObj);//"图表信息"是tcpGraph(这里没用上，因为图表现在是以文件形式上传到服务器),"明细信息"是FileInfo,因为这里要生成多个pcap文件的pdf，所以就要提供fileInfoList了
+				HashMap<String, Boolean> whoshowMap = generateWhoshowMap(jObj);//应显示的"通用指标"
+				
+				Map<String, String> ipAddrMap=null;
+				if(whoshowMap.get("a2")){//需要显示"ip归属地"
+						ipAddrMap = getIpAddrMap(request);//ip地址, session中取出ip地址, 字符串处理之后存map
+				}
+				
+				FileInfo fileInfo;
+				
+				PDFUti fPdfUti_hsy=new PDFUti();
+				String username = (String) request.getSession().getAttribute("username");
+				
+				for(int k=0; k<fileInfoList.size(); k++){ //依次处理每一个FileInfo(一个循环对应生成一个pdf报告)
+						fileInfo = fileInfoList.get(k);
+						
+						List<RebuildInfo> rebuildInfoList=generateRebuildInfos(fileInfo);
+					    String title = URLDecoder.decode(request.getParameter("Title").trim(), "utf-8");
+					    
+					    List<List<String>> baseInfoTable =generateBaseInfoTable(fileInfo,df);//基本信息
+					    
+					    List<String> kindInfo = new ArrayList<String>();//全局
+					    StringBuffer serviceIP = new StringBuffer();//全局
+					    
+					    List<List<String>> detailsInfoTable =new ArrayList<>();//详细信息
+					    detailsInfoTable.add(generateDetailsInfoTitle(whoshowMap));
+					    loadDetailsInfoData(request,fileInfo, kindInfo, serviceIP, ipAddrMap, detailsInfoTable,whoshowMap);
+					    
+					    List<List<String>> popularInfoTable =generatePopularInfoTable(serviceIP,fileInfo,df,whoshowMap);//通用信息
+					    
+					    List<List<String>> detailsInfoOthers=null;
+					    if(whoshowMap.get("a1")){
+					    		detailsInfoOthers= generateDetailsInfoOthers(fileInfo);//(其他)详细信息(即"无效ip集合")
+					    }
+					   
+					    String pcapShortName= fileInfo.getFileName();//detailsInfoOthers.get(1).get(0);
+					    
+						ArrayList<ArrayList<String>> subNameList = new ArrayList<ArrayList<String>>();//条件用于过滤选择图片文件
+						ArrayList<String> ipFlowSubNames = new ArrayList<String>();
+						ipFlowSubNames.add("aipFlow");
+						ipFlowSubNames.add(pcapShortName);
+						
+						ArrayList<String> bpacketLenSubNames = new ArrayList<String>();
+						bpacketLenSubNames.add("bpacketLen");
+						bpacketLenSubNames.add(pcapShortName);
+						
+						ArrayList<String> cuseSubNames = new ArrayList<String>();
+						cuseSubNames.add("cuse");
+						cuseSubNames.add(pcapShortName);
+						
+						ArrayList<String> zlinkSubNames = new ArrayList<String>();
+						zlinkSubNames.add("zlink");
+						zlinkSubNames.add(pcapShortName);
+						
+						subNameList.add(ipFlowSubNames);
+						subNameList.add(bpacketLenSubNames);
+						subNameList.add(cuseSubNames);
+						subNameList.add(zlinkSubNames);
+					    
+					    String filePath = fPdfUti_hsy.pdfMethod(request,
+																baseInfoTable,
+																response,
+																popularInfoTable,
+																detailsInfoTable,
+																watermarker,
+																title,
+																pcapShortName,
+																username, 
+																detailsInfoOthers,
+																rebuildInfoList,
+																kindInfo, 
+																null,//timeToFirstTible
+																subNameList);
+					    filePathInZips.add(filePath);
+				}
+				
+				if (filePathInZips.size() > 1) {
+						ZipUtil.downloadZip(response, filePathInZips);
+				} else if (filePathInZips.size() == 1) {
+						PDFUti.download(response, filePathInZips.get(0));
+				}
+	}
+	
+	/**
+	 * 选中"视频比较"或者"基本信息比较"时走这个方法:two pcap,one pdf
+	 * @throws Exception 
+	 */
+	private  void create2pcapIntoOnePDF(HttpServletRequest request,
+									   HttpServletResponse response,
+									   String data1,
+									   String watermarker,//水印信息
+									   boolean videoCompare,
+									   boolean baseInfoCompare) throws Exception{
+			watermarker=decodeAndSetDefaultValue(watermarker,"CMLAB-测试所-无线室","utf-8");//参数(水印)判断
+			
+			DecimalFormat df= new DecimalFormat("#");
+			List<String> filePathInZips = new ArrayList<String>();//生成多个pdf文件打包zip
+			if (StringUtil.isEmpty(data1)) {
+					log.error("生成pdf报告内容参数data1为空*****************");
+			}
+			
+			
+			
+			JSONObject jObj =decodeAndTransfer2JsonObj(data1,"utf-8");//代表所有前台传递的参数转换的大对象(包含几乎所有"明细数据",pdf中要生成的图表信息不是数据而是截取的页面现成的图片)
+			List<FileInfo> fileInfoList = generateFileInfoList(jObj);//"图表信息"是tcpGraph,"明细信息"是FileInfo,因为这里要生成多个pcap文件的pdf，所以就要提供fileInfoList了
+			HashMap<String, Boolean> whoshowMap = generateWhoshowMap(jObj);//应显示的"通用指标"
+			
+			Map<String, String> ipAddrMap=null;
+			if(whoshowMap.get("a2")){//需要显示"ip归属地"
+			    ipAddrMap = getIpAddrMap(request);//ip地址, session中取出ip地址, 字符串处理之后存map
+			}
+			
+			FileInfo fileInfo;
+			
+			List<List<List<String>>> baseInfoTableList=new ArrayList<>();
+			List<List<List<String>>> popularInfoTableList=new ArrayList<>();
+			List<List<List<String>>> detailsInfoTableList =new ArrayList<>();
+			List<List<List<String>>> detailsInfoOthersList=new ArrayList<>();//无效ip列表
+			List<List<RebuildInfo>> rebuildInfoListList=new ArrayList<>();
+			List<List<String>> kindInfoList=new ArrayList<>();
+			
+			HashMap<String, String> baseInfoCompareResult =null;
+		    List<List<String>>  baseInfoCompareTable=null;
+		    if(baseInfoCompare){
+		    		baseInfoCompareResult = new HashMap<String,String>();//"基本信息比较"表格上面的比较结果信息
+		    		baseInfoCompareTable=initBaseInfoCompareTable(jObj,baseInfoCompareResult);//"基本信息比较"表格
+		    }
+			List<String> titleList=new ArrayList<>();
+			String[]  pcapFileNames=new String[2];
+			
+			PDFUti fPdfUti_hsy=new PDFUti();
+			String username = (String) request.getSession().getAttribute("username");
+			
+			String pcapShortName_a=null;//aqynorm.pcap
+			String pcapShortName_b= null;//dqydelay.pcap
+			
+			for(int k=0; k<2; k++){ //依次处理每一个FileInfo(一个循环对应生成一个pdf报告)
+					fileInfo = fileInfoList.get(k);
+					if(k==0){
+						pcapShortName_a=fileInfo.getFileName();
+					}else if(k==1){
+						pcapShortName_b=fileInfo.getFileName();
+					}
+					
+					List<RebuildInfo> rebuildInfoList=generateRebuildInfos(fileInfo);
+				    String title = URLDecoder.decode(request.getParameter("Title").trim(), "utf-8");
+				    
+				    List<List<String>> baseInfoTable =generateBaseInfoTable(fileInfo,df);//基本信息
+				    
+				    List<String> kindInfo = new ArrayList<String>();//全局
+				    StringBuffer serviceIP = new StringBuffer();//全局
+				    
+				    List<List<String>> detailsInfoTable =new ArrayList<>();//详细信息
+				    detailsInfoTable.add(generateDetailsInfoTitle(whoshowMap));//详细信息title
+				    loadDetailsInfoData(request,fileInfo, kindInfo, serviceIP, ipAddrMap, detailsInfoTable,whoshowMap);//详细信息data
+				    
+				    List<List<String>> popularInfoTable =generatePopularInfoTable(serviceIP,fileInfo,df,whoshowMap);//通用信息
+				    
+				    
+				    List<List<String>> detailsInfoOthers=null;
+				    
+				    if(whoshowMap.get("a1")){//是否显示"无效ip"
+				    		detailsInfoOthers= generateDetailsInfoOthers(fileInfo);//(其他)详细信息(即无效ip列表)
+				    }
+				    pcapFileNames[k]=fileInfo.getFileName();
+				   
+					baseInfoTableList.add(baseInfoTable);
+					popularInfoTableList.add(popularInfoTable);//通用信息
+					detailsInfoTableList.add(detailsInfoTable);
+					detailsInfoOthersList.add(detailsInfoOthers);//无效ip
+					rebuildInfoListList.add(rebuildInfoList);
+					
+					if(videoCompare){
+							kindInfoList.add(kindInfo);
+					}
+					
+					titleList.add(title);
+			}
+			
+			FileInfo fileInfo1=fileInfoList.get(0);
+			FileInfo fileInfo2=fileInfoList.get(1);
+		
+			List<List<String>> timeToFirstTable = null;
+			if(videoCompare){//勾选了"视频比较"
+					timeToFirstTable = generateTimeToFirstTible_videoCompare(fileInfo1, fileInfo2);
+			}
+		    
+			ArrayList<ArrayList<String>> subNameList = new ArrayList<ArrayList<String>>();//条件用于过滤选择图片文件
+			
+			ArrayList<String> ipFlowSubNames_a = new ArrayList<String>();//IP流量分布图  0
+			ipFlowSubNames_a.add("aipFlow");
+			ipFlowSubNames_a.add(pcapShortName_a);
+			ArrayList<String> ipFlowSubNames_b = new ArrayList<String>();//          1
+			ipFlowSubNames_b.add("aipFlow");
+			ipFlowSubNames_b.add(pcapShortName_b);
+			
+			ArrayList<String> bpacketLenSubNames_a = new ArrayList<String>();//包长分布图2
+			bpacketLenSubNames_a.add("bpacketLen");
+			bpacketLenSubNames_a.add(pcapShortName_a);
+			ArrayList<String> bpacketLenSubNames_b = new ArrayList<String>();//       3
+			bpacketLenSubNames_b.add("bpacketLen");
+			bpacketLenSubNames_b.add(pcapShortName_b);
+			
+			ArrayList<String> cuseSubNames = new ArrayList<String>();//吞吐折线图                          4
+			cuseSubNames.add("cuse");
+			
+			ArrayList<String> zlinkSubNames_a = new ArrayList<String>();//链路图                         5
+			zlinkSubNames_a.add("zlink");
+			zlinkSubNames_a.add(pcapShortName_a);
+			ArrayList<String> zlinkSubNames_b = new ArrayList<String>();//             6
+			zlinkSubNames_b.add("zlink");
+			zlinkSubNames_b.add(pcapShortName_b);
+			
+			subNameList.add(ipFlowSubNames_a);
+			subNameList.add(ipFlowSubNames_b);
+			subNameList.add(bpacketLenSubNames_a);
+			subNameList.add(bpacketLenSubNames_b);
+			subNameList.add(cuseSubNames);
+			subNameList.add(zlinkSubNames_a);
+			subNameList.add(zlinkSubNames_b);
+			String filePath = fPdfUti_hsy.pdfMethod_Compare(request,
+													baseInfoTableList,
+													response,
+													popularInfoTableList,//通用信息表格
+													detailsInfoTableList,
+													watermarker,
+													titleList,
+													pcapFileNames,
+													username, 
+													detailsInfoOthersList,//无效ip列表
+													rebuildInfoListList,
+													kindInfoList, 
+													timeToFirstTable,
+													subNameList,
+													baseInfoCompareTable,
+													baseInfoCompareResult);
+			filePathInZips.add(filePath);		
+			
+			PDFUti.download(response, filePathInZips.get(0));
+	}
+	
+	
+
+	private List<List<String>> initBaseInfoCompareTable(JSONObject jObj,HashMap<String, String> baseInfoComparResul) {
+			List<List<String>> baseInfoComparList= new ArrayList<>();
+			
+			List<String> titleList=  new ArrayList<>();
+			List<String> dataList= null;
+			
+			titleList.add("名称");
+			titleList.add("交互时间(ms)");
+			titleList.add("交互流量(byte)");
+			titleList.add("ip数(个)");
+			titleList.add("链路个数");
+			titleList.add("是否频繁拆建链");
+			baseInfoComparList.add(titleList);
+			
+			try {
+					JSONArray xxx = JSONArray.fromObject(jObj.get("baseInfoCompareObj"));//[{"base":{"fileName":"aqynorm.pcap","commuTime":"99266.69","commuFlow":2645131,"ipNum":8,"linkNum":17,"frequRebuild":"否"},"jingpin":{"fileName":"aqydelay.pcap","commuTime":"37389.82","commuFlow":1055595,"ipNum":6,"linkNum":14,"frequRebuild":"否"},"compareResult":{"commuTime":"优于","commuFlow":"优于","ipNum":"优于","linkNum":"优于","frequRebuild":"不存在"}}]
+					List<HashMap<String, Object>> list =  (List<HashMap<String, Object>>) JSONArray.toCollection(xxx, HashMap.class);
+					
+					HashMap<String, Object> jsonObj = list.get(0);
+					Set<Entry<String, Object>> entrySet = jsonObj.entrySet();
+					HashMap<String, String> baseMap = new HashMap<String,String>();
+					HashMap<String, String> jingpinMap = new HashMap<String,String>();
+					for (Entry<String, Object> entry : entrySet) {
+									String key=entry.getKey();
+									JSONArray jsonArray = JSONArray.fromObject( entry.getValue());
+									List<HashMap<String, String>> list1 =  (List<HashMap<String, String>>) JSONArray.toCollection(jsonArray, HashMap.class);
+									
+									if("base".equals(key)){
+											baseMap = list1.get(0);
+									}else if("jingpin".equals(key)){
+										    jingpinMap = list1.get(0);
+									}else if("compareResult".equals(key)){
+											HashMap<String, String> map = list1.get(0);
+											baseInfoComparResul.put("commuTime", map.get("commuTime"));
+											baseInfoComparResul.put("commuFlow", map.get("commuFlow"));
+											baseInfoComparResul.put("ipNum", map.get("ipNum"));
+											baseInfoComparResul.put("linkNum", map.get("linkNum"));
+											baseInfoComparResul.put("frequRebuild", map.get("frequRebuild"));
+									}
+					}
+					
+					dataList=new ArrayList<>();
+					dataList.add(baseMap.get("fileName")+"(基础数据)");
+					dataList.add(String.valueOf(baseMap.get("commuTime")));
+					dataList.add(String.valueOf(baseMap.get("commuFlow")));
+					dataList.add(String.valueOf(baseMap.get("ipNum")));
+					dataList.add(String.valueOf(baseMap.get("linkNum")));
+					dataList.add(baseMap.get("frequRebuild"));
+					baseInfoComparList.add(dataList);
+					
+					dataList=new ArrayList<>();
+					dataList.add(jingpinMap.get("fileName")+"(竞品数据)");
+					dataList.add(String.valueOf(jingpinMap.get("commuTime")));
+					dataList.add(String.valueOf(jingpinMap.get("commuFlow")));
+					dataList.add(String.valueOf(jingpinMap.get("ipNum")));
+					dataList.add(String.valueOf(jingpinMap.get("linkNum")));
+					dataList.add(jingpinMap.get("frequRebuild"));
+					baseInfoComparList.add(dataList);
+			} catch (Exception e) {
+					e.printStackTrace();
+			}
+			return baseInfoComparList;
+	}
+
+	@SuppressWarnings({ "unchecked"})
+	@RequestMapping(value="/CreatePDF.do", method=RequestMethod.POST)//与上面的CreatePDF不同的是，两个pcap信息生成到一个pdf文件中，并且最顶部要包含比较的信息(即页面中top处的比较信息)
+	public void CreatePDF(HttpServletRequest request,
+									   HttpServletResponse response,
+									   String[] data1,//前台传递的可能是是超长字段(所以要分多个字段)
+									   String watermarker,//水印信息
+									   boolean videoCompare,
+									   boolean baseInfoCompare) throws Exception{
+			log.info("生成pdf(视频比较生成到单个文件)报告开始----------------");
+			StringBuilder data1Str=new StringBuilder("");
+		    if(data1!=null&&data1.length>0){
+			    	 for (int i = 0; i < data1.length; i++) {
+						    data1Str.append(data1[i]);
+					 }
+		    }
+			
+			if(videoCompare||baseInfoCompare){
+				create2pcapIntoOnePDF(request, response, data1Str.toString(), watermarker,videoCompare,baseInfoCompare);
+			}else{
+				createPdfEachPcapEachFile(request, response, data1Str.toString(), watermarker);
+			}
+			log.info("生成pdf报告(视频比较)结束------------");
+	}
+
+
+	
+	private List<List<String>> generateDetailsInfoOthers(FileInfo fileInfo) {
+		  	List<List<String>> detailsInfoOthers = new ArrayList<>();//(其他)详细信息
+		    List<String> othersTitle = new ArrayList<String>();
+		    othersTitle.add("业务名");
+		    othersTitle.add("无效ip");
+		    List<String> othersInfo = new ArrayList<String>();
+		    othersInfo.add(fileInfo.getFileName());
+		    
+		    StringBuffer othersIPs = new StringBuffer();
+		    List<String> othersIP = fileInfo.getOthers();
+		    for(int i=0; i<othersIP.size(); i++) {
+			    	othersIPs.append(othersIP.get(i));
+			    	othersIPs.append(",");
+		    }
+		    
+		    if (othersIPs.length() > 1) {
+		    		othersIPs.deleteCharAt(othersIPs.length()-1);
+			}
+		    othersInfo.add(othersIPs.toString());
+		    detailsInfoOthers.add(othersTitle);
+		    detailsInfoOthers.add(othersInfo);
+		    
+		    return detailsInfoOthers;
+	}
+
+
+
+
+	private void loadDetailsInfoData(HttpServletRequest request,FileInfo fileInfo,List<String> kindInfo,StringBuffer serviceIP,Map<String, String> ipAddrMap,List<List<String>> detailsInfoTable,HashMap<String,Boolean> whoShowMap) throws InterruptedException, ExecutionException, Exception{
+			
+		
+			List<String> detailsInfoData;//局部
+		    JSONArray serviceIPJSON = JSONArray.fromObject(fileInfo.getServiceIP());//局部
+		    List<ServiceIP> serviceIPs = (List<ServiceIP>) JSONArray.toCollection(serviceIPJSON, ServiceIP.class);//局部
+		    JSONArray ipInfoJSON;//局部
+		    List<ServiceIPInfo> ipInfoList = new ArrayList<ServiceIPInfo>();//局部
+		    
+		    
+		    
+		    
+		    for(int i=0; i<serviceIPs.size(); i++) {
+			    	serviceIP.append(" ");
+			    	serviceIP.append(serviceIPs.get(i).getServiceIP());
+			    	serviceIP.append(",");
+			    	
+			    	ipInfoJSON = JSONArray.fromObject(serviceIPs.get(i).getServiceIPInfo());
+			    	ipInfoList = (List<ServiceIPInfo>) JSONArray.toCollection(ipInfoJSON, ServiceIPInfo.class);
+			    	for(int j=0; j<ipInfoList.size(); j++) {
+				    		if (ipInfoList.get(j).getKind() < 0) {
+				    				kindInfo.add(serviceIPs.get(i).getServiceIP() + "(" + ipInfoList.get(j).getPorts() + ")");
+							}
+				    		detailsInfoData = new ArrayList<String>();
+				    		detailsInfoData.add(serviceIPs.get(i).getServiceIP());//标题：serviceIP(一显示)
+				    		if(whoShowMap.get("a3")){//标题：测试地归属(a3)
+				    				detailsInfoData.add(ipInfoList.get(j).getTestAttribution());
+				    		}
+				    		
+				    		if(whoShowMap.get("a5")){//标题:dns时延(a5)
+					    			if (ipInfoList.get(j).getDnsDelsyTs() == null || ipInfoList.get(j).getDnsDelsyTs().equals("")) {
+						    				detailsInfoData.add("N/A");
+									} else {
+											detailsInfoData.add(ipInfoList.get(j).getDnsDelsyTs());
+									}
+				    		}
+				    		
+				    		detailsInfoData.add(String.valueOf(ipInfoList.get(j).getPorts()));//标题:端口号(一定显示)
+				    		
+				    		if(whoShowMap.get("a6")){//标题：tcp建链时延(a6)
+				    				detailsInfoData.add(ipInfoList.get(j).getTcpTimeDelayed());
+				    		}
+				    		
+				    		if(whoShowMap.get("a4")){//标题：请求类别(a4)
+				    				detailsInfoData.add(ipInfoList.get(j).getRequestCategoryBreviary());
+				    		}
+							
+				    		if(whoShowMap.get("a19")){//标题：Time to First Byte(ms)(a19)
+					    			if (ipInfoList.get(j).getTimeToFirstByte().equals("N/A")) {
+						    				detailsInfoData.add("N/A");
+									} else {
+											detailsInfoData.add(ipInfoList.get(j).getTimeToFirstByte());
+									}
+				    		}
+				    		
+				    		if(whoShowMap.get("a7")){//标题:包数(个)(a7)
+				    				detailsInfoData.add(String.valueOf(ipInfoList.get(j).getPacketCount()));
+				    		}
+				    		
+				    		if(whoShowMap.get("a9")){//标题:交互流量（a9）
+					    			if (ipInfoList.get(j).getExchangeFlow() != null && !ipInfoList.get(j).getExchangeFlow().equals("")) {
+							    			if (ipInfoList.get(j).getExchangeFlow().contains(".")) {
+							    					detailsInfoData.add(ipInfoList.get(j).getExchangeFlow().substring(0,ipInfoList.get(j).getExchangeFlow().indexOf(".")));
+											} else {
+													detailsInfoData.add(ipInfoList.get(j).getExchangeFlow());
+											}
+									} else {
+											detailsInfoData.add("0");
+									}
+				    		}
+				    		
+				    		if(whoShowMap.get("a10")){//标题：交互时间(a10)
+				    				detailsInfoData.add(ipInfoList.get(j).getExchangeTime());
+				    		}
+				    		
+				    		
+				    		if(whoShowMap.get("a11")){//标题：链路时间有效率(%)(a11)
+					    			if (ipInfoList.get(j).getTimeEfficiency().equals("0.00")) {
+						    				detailsInfoData.add("N/A");
+									} else {
+											detailsInfoData.add(ipInfoList.get(j).getTimeEfficiency());
+									}
+				    		}
+				    		
+				    		if(whoShowMap.get("a12")){//标题：重传识别（次）(a12)
+				    				detailsInfoData.add(String.valueOf(ipInfoList.get(j).getAgainRequestCount()));
+				    		}
+				    		
+				    		if(whoShowMap.get("a14")){//标题：平均RTT时间(ms)(a14)
+				    				detailsInfoData.add(ipInfoList.get(j).getRttTime());
+				    		}
+				    		
+				    		if(whoShowMap.get("a15")){//标题：断链时延(ms)(a15)
+				    				detailsInfoData.add(ipInfoList.get(j).getOffTimeDelayed());
+				    		}
+				    		
+				    		if(whoShowMap.get("a16")){//标题：与上条链路串并行关系(a16)
+				    				detailsInfoData.add(ipInfoList.get(j).getLastRelationship());
+				    		}
+				    		
+				    		if(whoShowMap.get("a17")){//标题:与上条链路间隔时延(a17)
+				    				detailsInfoData.add(ipInfoList.get(j).getLastTimeDelayed());
+				    		}
+				    		
+				    		if(whoShowMap.get("a18")){//标题：串行链路频繁拆建链判断(a18)
+				    				detailsInfoData.add(String.valueOf(ipInfoList.get(j).getOftenOffVerdict()));
+				    		}
+				    		
+				    		if(whoShowMap.get("a2")&&ipAddrMap!=null){//标题：IP归属地(a2)(目前这个有问题，为Null,前台展示时通过额外发送ajax访问数据库查询的，所以前台传递的pdfData暂不包含该信息)
+				    			    String ipAddr=ipAddrMap.get(serviceIPs.get(i).getServiceIP());
+				    			    if(ipAddr==null||ipAddr.length()==0){
+				    			    		ipAddr="N/A";
+				    			    }
+				    				detailsInfoData.add(ipAddr);
+				    		}
+				    		detailsInfoTable.add(detailsInfoData);
+			    	}
+		    }
+	}
+	
+
+	private List<String> generateDetailsInfoTitle(HashMap<String, Boolean> whoShowMap) {
+			List<String> detailsInfoTitle = new ArrayList<String>();
+		    detailsInfoTitle.add("server IP");//必须显示
+		    if(whoShowMap.get("a3")){
+		    	 detailsInfoTitle.add("测试地归属");
+		    }
+		   
+		    if(whoShowMap.get("a5")){
+		    	 detailsInfoTitle.add("DNS时延(ms)");
+		    }
+		   
+		    detailsInfoTitle.add("端口号");//必须显示
+		    
+		    if(whoShowMap.get("a6")){
+		    	  detailsInfoTitle.add("TCP建链时延(ms)");
+		    }
+		  
+		    if(whoShowMap.get("a4")){
+		    		detailsInfoTitle.add("请求类别");
+		    }
+		    
+		    if(whoShowMap.get("a19")){
+		    		detailsInfoTitle.add("建链后首包延时(ms)");
+		    }
+		   
+		    if(whoShowMap.get("a7")){
+		    		detailsInfoTitle.add("包数(个)");
+		    }
+		    
+		    if(whoShowMap.get("a9")){
+		    	 	detailsInfoTitle.add("交互流量(byte)");
+		    }
+		   
+		    if(whoShowMap.get("a10")){
+		    		detailsInfoTitle.add("交互时间(ms)");
+		    }
+		    
+		    if(whoShowMap.get("a11")){
+	    	 		detailsInfoTitle.add("链路时间有效率(%)");
+		    }
+		   
+		    if(whoShowMap.get("a12")){
+		    	 	detailsInfoTitle.add("重传识别(次)");
+		    }
+		    
+		    if(whoShowMap.get("a14")){
+		    		detailsInfoTitle.add("平均RTT时间(ms)");
+		    }
+		   
+		    if(whoShowMap.get("a15")){
+		    	  	detailsInfoTitle.add("断链时延(ms)");
+		    }
+		   
+		    if(whoShowMap.get("a16")){
+		    		detailsInfoTitle.add("与上条链路串并行关系");
+		    }
+		  
+		    if(whoShowMap.get("a17")){
+		    		detailsInfoTitle.add("与上条链路间隔时延(ms)");
+		    }
+		    
+		    if(whoShowMap.get("a18")){
+		    	    detailsInfoTitle.add("串行链路频繁拆建链判断(0~2s)");
+		    }
+		    
+		    if(whoShowMap.get("a2")){
+		    		detailsInfoTitle.add("服务器IP归属");
+		    }
+		    return detailsInfoTitle;
+	}
+
+
+
+	private List<List<String>> generatePopularInfoTable(StringBuffer serviceIP,FileInfo fileInfo,DecimalFormat df,HashMap<String, Boolean> whoShowMap) {
+		 	List<List<String>> popularInfoTable =new ArrayList<>();//通用信息（目测是对统计信息统计得来的）
+		    
+		    List<String> popularInfoTitle = new ArrayList<String>();
+		    List<String> popularInfoData = new ArrayList<String>();
+		    popularInfoTitle.add("Server IP");
+		    popularInfoTitle.add("DNS时延(ms)");
+		    
+		    if(whoShowMap.get("a8")){
+		    	 	popularInfoTitle.add("链路数");
+		    }
+		   
+		    popularInfoTitle.add("包数(个)");
+		    popularInfoTitle.add("交互流量(byte)");
+		    popularInfoTitle.add("交互时间(ms)");
+		    
+		    if(whoShowMap.get("a13")){
+		    		popularInfoTitle.add("平均链路时间有效率(%)");
+		    }
+		   
+		    
+		    popularInfoData.add(serviceIP.deleteCharAt(serviceIP.length()-1).toString());
+		    popularInfoData.add(String.valueOf(fileInfo.getDnsTimeDelayedcount()));
+		    
+		    if(whoShowMap.get("a8")){
+		    	 	popularInfoData.add(String.valueOf(fileInfo.getTcpCount()));
+		    }
+		   
+		    popularInfoData.add(String.valueOf(fileInfo.getPacketCount()));
+		    popularInfoData.add(df.format(fileInfo.getExchangeFlowCount()));
+		    popularInfoData.add(String.valueOf(fileInfo.getExchangeTimeCount()));
+		    
+		    if(whoShowMap.get("a13")){
+		    		popularInfoData.add(fileInfo.getTimeEfficiencyAVG());
+		    }
+		    
+		    popularInfoTable.add(popularInfoTitle);
+		    popularInfoTable.add(popularInfoData);
+		    
+		    return popularInfoTable;
+	}
+
+
+
+	private List<List<String>> generateBaseInfoTable(FileInfo fileInfo,DecimalFormat df) {
+			List<List<String>> baseInfoTable =new ArrayList<>();//基本信息
+		    List<String> baseInfoTitle = new ArrayList<String>();
+		    List<String> baseInfoData = new ArrayList<String>();
+		    baseInfoTitle.add("持续时间(ms)");
+		    baseInfoTitle.add("数据传输时间(ms)");
+		    baseInfoTitle.add("传输总包数(个)");
+		    baseInfoTitle.add("传输量最大IP及端口");
+		    baseInfoTitle.add("传输总字节(byte)");
+		    baseInfoTitle.add("总链路数(个)");
+		    baseInfoTitle.add("链路最多IP");
+		    baseInfoTitle.add("链路最多IP(链路数)");
+		    
+		    
+		    baseInfoData.add(fileInfo.getAllKeepTimes());
+		    baseInfoData.add(fileInfo.getAllFileDataTimes());
+		    baseInfoData.add(String.valueOf(fileInfo.getPacketCount()));
+		    baseInfoData.add(fileInfo.getMaxFlowIP() + ": " + fileInfo.getMaxFlowPort());
+		    baseInfoData.add(df.format(fileInfo.getExchangeFlowCount()));
+//		    baseInfoData.add(String.valueOf(fileInfo.getExchangeFlowCount()));
+		    baseInfoData.add(String.valueOf(fileInfo.getTcpCount()));
+		    baseInfoData.add(fileInfo.getMaxTCPip());
+		    baseInfoData.add(String.valueOf(fileInfo.getIpTCPCounts()));
+		    baseInfoTable.add(baseInfoTitle);
+		    baseInfoTable.add(baseInfoData);
+		    
+		    return baseInfoTable;
+	}
+
+
+
+	private List<RebuildInfo> generateRebuildInfos(FileInfo fileInfo) {
+			JSONArray rebuild = JSONArray.fromObject(fileInfo.getRebuildInfo());//这一句不是废话吗？
+			List<RebuildInfo> rebuildInfoList= (List<RebuildInfo>) JSONArray.toCollection(rebuild, RebuildInfo.class);
+			return rebuildInfoList;
+	}
+
+
+
+	/*private List<String> generateTimeToFirst(FileInfo fileInfo) {
+			List<String> timeToFirst =new ArrayList<String>();
+		
+			StringBuffer msg_TtFS = new StringBuffer();
+			StringBuffer msg_TtFR = new StringBuffer();
+			
+			if(fileInfo.getAvgT1Rs() == 0) {
+					timeToFirst.add("false");
+					msg_TtFS.append("耗时多于");
+			} else if(fileInfo.getAvgT1Rs() == 1) {
+					timeToFirst.add("true");
+					msg_TtFS.append("耗时等于");
+			} else if(fileInfo.getAvgT1Rs() == 2) {
+					timeToFirst.add("true");
+					msg_TtFS.append("耗时低于");
+			}
+			msg_TtFS.append("竞品相关参数,");
+			msg_TtFS.append("高于腾讯");
+			msg_TtFS.append(fileInfo.getAvgTxT1Rs());
+			msg_TtFS.append(",");
+			msg_TtFS.append("高于爱奇艺");
+			msg_TtFS.append(fileInfo.getAvgAqyT1Rs());
+			msg_TtFS.append(".");
+			timeToFirst.add(msg_TtFS.toString());
+			
+			if(fileInfo.getAvgT2Rs() == 0) {
+					timeToFirst.add("false");
+					msg_TtFR.append("耗时多于");
+			} else if(fileInfo.getAvgT2Rs() == 1) {
+					timeToFirst.add("true");
+					msg_TtFR.append("耗时等于");
+			} else if(fileInfo.getAvgT2Rs() == 2) {
+					timeToFirst.add("true");
+					msg_TtFR.append("耗时低于");
+			}
+			msg_TtFR.append("竞品相关参数.");
+			
+			if (fileInfo.getAvgTxT2Rs() != null && !fileInfo.getAvgTxT1Rs().equals("")) {
+					msg_TtFR.append("高于腾讯");
+					msg_TtFR.append(fileInfo.getAvgTxT2Rs());
+			}
+			if (fileInfo.getAvgAqyT2Rs() != null && !fileInfo.getAvgAqyT2Rs().equals("")) {
+					msg_TtFR.append(",");
+					msg_TtFR.append("高于爱奇艺");
+					msg_TtFR.append(fileInfo.getAvgAqyT2Rs());
+					msg_TtFR.append(".");
+			}
+			
+			timeToFirst.add(msg_TtFR.toString());
+			
+			return timeToFirst;
+	}*/
+
+
+/**
+ * 视频业务对比:TtF表格信息	
+ * @param fileInfo1
+ * @param fileInfo2
+ * @return
+ */
+	private List<List<String>> generateTimeToFirstTible_videoCompare(FileInfo fileInfo1,FileInfo fileInfo2) {
+			List<List<String>> timeToFirstTible = null;
+			List<String> ttftTitle;
+			timeToFirstTible = new ArrayList<>();
+			
+			ttftTitle = new ArrayList<String>();
+			ttftTitle.add("业务名");
+			ttftTitle.add("TtFS(ms)");
+			ttftTitle.add("TtFR(ms)");
+			timeToFirstTible.add(ttftTitle);
+			
+			ttftTitle = new ArrayList<String>();//FileInfo1
+			ttftTitle.add(fileInfo1.getFileName());			
+			ttftTitle.add(fileInfo1.getavgT1());
+			ttftTitle.add(fileInfo1.getavgT2());
+			timeToFirstTible.add(ttftTitle);
+			
+			ttftTitle = new ArrayList<String>();//FileInfo2
+			ttftTitle.add(fileInfo2.getFileName());			
+			ttftTitle.add(fileInfo2.getavgT1());
+			ttftTitle.add(fileInfo2.getavgT2());
+			timeToFirstTible.add(ttftTitle);
+			
+			return timeToFirstTible;
+	}
+
+	
+	
+
+	/*private List<List<String>> generateTimeToFirstTible(FileInfo fileInfo) {
+			List<List<String>> timeToFirstTible = null;
+			List<String> ttftTitle;
+			timeToFirstTible = new ArrayList<>();
+			
+			ttftTitle = new ArrayList<String>();
+			ttftTitle.add("业务名");
+			ttftTitle.add("TtFS");
+			ttftTitle.add("TtFR");
+			timeToFirstTible.add(ttftTitle);
+			
+			
+			ttftTitle = new ArrayList<String>();
+			ttftTitle.add("");			
+			ttftTitle.add("时间(ms)");
+			ttftTitle.add("相差百分比");
+			ttftTitle.add("时间(ms)");
+			ttftTitle.add("相差百分比");
+			timeToFirstTible.add(ttftTitle);
+			
+			
+			ttftTitle = new ArrayList<String>();
+			ttftTitle.add("本次测试");			
+			ttftTitle.add(fileInfo.getavgT1());
+			ttftTitle.add("-");
+			ttftTitle.add(fileInfo.getavgT2());
+			ttftTitle.add("-");
+			timeToFirstTible.add(ttftTitle);
+			
+			
+			ttftTitle = new ArrayList<String>();
+			ttftTitle.add("Tencent");			
+			ttftTitle.add(String.valueOf(fileInfo.getavgTxT1()));
+			if (fileInfo.getAvgTxT1Rs() == null || fileInfo.getAvgTxT1Rs().equals("")) {
+					ttftTitle.add("-");
+			} else {
+					ttftTitle.add(fileInfo.getAvgTxT1Rs());
+			}
+			ttftTitle.add(String.valueOf(fileInfo.getavgTxT2()));
+			if (fileInfo.getAvgTxT2Rs() == null || fileInfo.getAvgTxT2Rs().equals("")) {
+					ttftTitle.add("-");
+			} else {
+					ttftTitle.add(fileInfo.getAvgTxT2Rs());
+			}
+			timeToFirstTible.add(ttftTitle);
+			
+			
+			ttftTitle = new ArrayList<String>();
+			ttftTitle.add("IQiyi");			
+			ttftTitle.add(String.valueOf(fileInfo.getAvgAqyT1()));
+			if (fileInfo.getAvgAqyT1Rs() == null || fileInfo.getAvgAqyT1Rs().equals("")) {
+					ttftTitle.add("-");
+			} else {
+					ttftTitle.add(fileInfo.getAvgAqyT1Rs());
+			}
+			ttftTitle.add(String.valueOf(fileInfo.getavgAqyT2()));
+			if (fileInfo.getAvgAqyT2Rs() == null || fileInfo.getAvgAqyT2Rs().equals("")) {
+					ttftTitle.add("-");
+			} else {
+					ttftTitle.add(fileInfo.getAvgAqyT2Rs());
+			}
+			timeToFirstTible.add(ttftTitle);
+			
+			return timeToFirstTible;
+	}
+*/
+
+
+	private List<FileInfo> generateFileInfoList(JSONObject jObj) {
+			JSONArray fileInfosJSON = null;
+			List<FileInfo> fileInfoList = null;
+			try {
+					fileInfosJSON = JSONArray.fromObject(jObj.get("fileInfos"));
+					fileInfoList = (List<FileInfo>) JSONArray.toCollection(fileInfosJSON, FileInfo.class);
+			} catch (Exception e) {
+					log.error("json转json数组错误--json数组转list错误*******************:" + jObj.get("fileInfos"));
+					log.error(e);
+			}
+			return fileInfoList;
+	}
+	private HashMap<String, Boolean> generateWhoshowMap(JSONObject jObj) {
+		HashMap<String, Boolean> map=null;
+		try {
+			JSONArray xxx = JSONArray.fromObject(jObj.get("whoShow"));
+			List<HashMap<String, Boolean>> list =  (List<HashMap<String, Boolean>>) JSONArray.toCollection(xxx, HashMap.class);
+			map = list.get(0);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return map;
+	}
+
+
+
+	private JSONObject decodeAndTransfer2JsonObj(String data, String charset) {
+			String dataDecoder = "";
+			JSONObject jObj =null;
+			try {
+					dataDecoder = URLDecoder.decode(data, charset);//转码
+					jObj = JSONObject.fromObject(dataDecoder);
+			} catch (Exception e) {
+					log.error("生成pdf报告内容参数data1格式化为json错误*****************入参数据-----转码后:" + dataDecoder);
+					log.error(e);
+			}
+			return jObj;
+	}
+	
+	
+
+
+	private Map<String, String> getIpAddrMap(HttpServletRequest request) throws InterruptedException, ExecutionException, Exception {
+			/*HttpSession session = request.getSession();
+			Map<String, String> sessionMap = (Map<String, String>) session.getAttribute("ipAddrIds");
+			Map<String, String> ipAddr = new HashMap<String, String>();
+			if (sessionMap != null && sessionMap.size() > 0) {
+				for (String ipAdd : sessionMap.keySet()) {//distinctByIpNotIpid
+					ipAddr.put(ipAdd.substring(ipAdd.indexOf("-")+1), sessionMap.get(ipAdd));
+				}
+			}
+			return ipAddr;*/
+			ShardedJedis jedis = null;
+			jedis = shardedJedisPool.getResource();
+			
+			HttpSession session = request.getSession();
+			String[] filecheck = (String[]) session.getAttribute("filecheck");
+			String userName = (String)session.getAttribute("username");
+				
+			HashMap<String, String> map_ip_ipAddr = new HashMap<String, String>();
+			HashMap<String, String> tempMap = new HashMap<String, String>();
+	
+			String fileIpAddr = null;
+			List<String> ipAddrIds = new ArrayList<String>();
+			List<String> redisFileSerIP;
+			
+			String ipState;
+			//从redis中取出redis中没有ip归属地的ip,进行ip归属地查询
+			for(int i=0; i<filecheck.length; i++) {
+					ipState = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.IP_ADDRESS_ASCRIPTION_STATE);
+					if(ipState==null || ipState.equals("1")){
+						redisFileSerIP = jedis.lrange(userName + "_" + filecheck[i] + RedisStorageConfig.IP_ADDRESS, 0, -1);
+						ipAddrIds.addAll(redisFileSerIP);
+						ipAddService.ipAscription(ipAddrIds, filecheck[i], userName);
+						//取出相应ip以及归属地
+						fileIpAddr = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.IP_ADDRESS_ASCRIPTION);
+						if(fileIpAddr != null){
+								tempMap.putAll(com.alibaba.fastjson.JSONObject.parseObject(fileIpAddr, Map.class));
+						}
+					}else{
+						fileIpAddr = jedis.get(userName + "_" + filecheck[i] + RedisStorageConfig.IP_ADDRESS_ASCRIPTION);
+						if(fileIpAddr != null){
+								tempMap.putAll(com.alibaba.fastjson.JSONObject.parseObject(fileIpAddr, Map.class));
+						}
+					}
+			}
+			
+			Set<String> keySet = tempMap.keySet();
+			for (String key : keySet) {
+					String newKey = key.substring(key.indexOf("-")+1);
+					map_ip_ipAddr.put(newKey, tempMap.get(key));
+			}
+			return map_ip_ipAddr;
+	}
+
+
+
+	private String decodeAndSetDefaultValue(String svalue,String defV,String charset) throws UnsupportedEncodingException {
+			if (StringUtil.isEmpty(svalue)) {
+					log.error(svalue + "svalue参数为空(pdf报告水印)----------------");
+					return  defV;
+			} else {
+					return URLDecoder.decode(svalue, charset);
+			}
+	}
+	
+
+}
